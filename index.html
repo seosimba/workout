@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* 새로고침하면 항상 새로 받기 — 호스팅이 HTML을 캐시해도(GitHub Pages는 10분) 새로고침이면
+   고유 주소(?_r=시각)로 다시 받아 브라우저·CDN 캐시를 건너뛰고, 받은 뒤 주소에서 _r을 지운다. */
+(function () {
+  try {
+    var u = new URL(location.href);
+    if (u.searchParams.has('_r')) {
+      u.searchParams.delete('_r');
+      history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+      return;
+    }
+    var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    var reload = nav ? nav.type === 'reload' : (performance.navigation && performance.navigation.type === 1);
+    if (reload) {
+      u.searchParams.set('_r', Date.now());
+      location.replace(u.href);
+    }
+  } catch (e) {}
+})();
+</script>
+<script>
+/* 탭 — 첫 화면부터 맞는 탭만 보이게(깜빡임 방지). 정확한 판정은 아래 본문 스크립트가 다시 해요. */
+(function () {
+  var h = location.hash.slice(1), t = 'month';
+  if (/^(routine|r-)/.test(h)) t = 'routine';
+  else if (h && h !== 'month' && h !== 'records') t = 'principles';
+  document.documentElement.classList.add('tabs-on');
+  document.documentElement.setAttribute('data-tab', t);
+})();
+</script>
+<title>겨울 운동 노트</title>
+<meta name="description" content="무릎을 지키며 집에서 하는 겨울 운동 — 한 달 단위 일정">
+<meta property="og:type" content="article">
+<meta property="og:title" content="겨울 운동 노트">
+<meta property="og:description" content="무릎을 지키며 집에서 하는 겨울 운동 — 한 달 단위 일정">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #f9faf8; --surface: #ffffff; --text: #1d211e; --text-sub: #575e59;
+    --border: #e4e7e2; --rule: #23282419; --accent: #067d4e; --accent-bright: #04b854;
+    --accent-tint: #eef6f0; --warn-bg: #faf3e6; --warn-border: #e8d4a4; --warn-text: #75581d;
+    --code-bg: #eff1ee;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141715; --surface: #1c201d; --text: #e6e9e6; --text-sub: #a3aaa4;
+      --border: #2c312d; --rule: #e6e9e625; --accent: #4ecb8d; --accent-bright: #35b874;
+      --accent-tint: #18271e; --warn-bg: #2a2314; --warn-border: #5a4b27; --warn-text: #d9bc7c;
+      --code-bg: #242925;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif;
+    background: var(--bg); color: var(--text); font-size: 17px; line-height: 1.8;
+    word-break: keep-all; overflow-wrap: break-word;
+  }
+  ::selection { background: var(--accent-tint); color: var(--text); }
+  :focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; border-radius: 3px; }
+  article { max-width: 46rem; margin: 0 auto; padding: 20px 32px 96px; }
+
+  .eyebrow { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.76rem; font-weight: 600; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+  header.top { padding-bottom: 6px; }
+  header.top h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.3; margin: 6px 0 4px; text-wrap: balance; }
+  header.top p { font-size: 0.88rem; color: var(--text-sub); margin-bottom: 8px; }
+
+  h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.35; margin: 64px 0 16px; text-wrap: balance; scroll-margin-top: 64px; }
+  h2::before { content: ""; display: block; width: 2.2rem; height: 3px; background: var(--accent-bright); margin-bottom: 14px; border-radius: 2px; }
+  h3 { font-size: 1.12rem; font-weight: 700; margin: 36px 0 10px; scroll-margin-top: 64px; }
+  h4 { font-size: 0.98rem; font-weight: 700; margin: 18px 0 6px; }
+  .anchor { margin-left: 8px; font-weight: 400; color: var(--text-sub); opacity: 0; transition: opacity .15s; }
+  h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
+  p { margin-bottom: 14px; text-wrap: pretty; }
+  strong { font-weight: 700; }
+  ul, ol { margin: 6px 0 16px 22px; }
+  li { margin-bottom: 8px; text-wrap: pretty; }
+  li::marker { color: var(--accent); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .table-wrap { overflow-x: auto; margin: 12px 0 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; line-height: 1.6; border-top: 2px solid var(--text); font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-weight: 700; padding: 9px 12px 7px; border-bottom: 1px solid var(--text); white-space: nowrap; font-size: 0.82rem; }
+  td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--text-sub); }
+  td:first-child, th:first-child { white-space: nowrap; color: var(--text); font-weight: 600; }
+  tr.hl td { background: var(--accent-tint); }
+  tbody tr:hover td { background: var(--accent-tint); }
+  .caption { font-size: 0.84rem; color: var(--text-sub); margin-top: 8px; }
+
+  .callout { border-left: 3px solid var(--accent-bright); background: var(--accent-tint); padding: 14px 20px; margin: 18px 0; border-radius: 0 8px 8px 0; font-size: 0.96rem; }
+  .callout.warn { border-left-color: var(--warn-border); background: var(--warn-bg); color: var(--warn-text); }
+  .callout .label { display: block; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 4px; color: var(--accent); }
+  .callout.warn .label { color: var(--warn-text); }
+  .callout ul { margin-bottom: 0; }
+  .callout li:last-child, .callout p:last-child { margin-bottom: 0; }
+
+  .tag { display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; padding: 1px 8px; border-radius: 99px; vertical-align: 2px; margin-left: 6px; background: var(--accent-tint); color: var(--accent); }
+  .tag.sub { background: var(--code-bg); color: var(--text-sub); }
+
+  details { margin: 4px 0 16px; padding: 10px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  summary { cursor: pointer; font-size: 0.92rem; font-weight: 600; color: var(--accent); }
+  details[open] summary { margin-bottom: 8px; }
+
+  /* 탭 — 이번 달이 항상 첫 화면, 탭 줄은 위에 붙어 있어요. JS가 꺼져 있으면 탭 없이 전부 보여요 */
+  .tabs { display: none; }
+  .tabs-on .tabs { display: flex; position: sticky; top: 0; z-index: 5; gap: 2px; margin: 0 -16px 4px; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .tabs a { flex: 1 1 0; min-width: 0; text-align: center; padding: 12px 2px 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-sub); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tabs a:hover { text-decoration: none; color: var(--accent); }
+  .tabs a[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent-bright); font-weight: 700; }
+  .tabs-on [data-panel] { display: none; }
+  html[data-tab="month"] [data-panel="month"], html[data-tab="routine"] [data-panel="routine"],
+  html[data-tab="principles"] [data-panel="principles"] { display: block; }
+  .tabs-on .cal-wrap > h2:first-child { display: none; }
+  .tabs-on [data-panel] > h2:first-child { margin-top: 20px; }
+
+  /* 한 달 캘린더 */
+  .m-head { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 6px; }
+  .m-title { font-weight: 800; font-size: 1.1rem; }
+  .m-nav { font: inherit; font-size: 1.15rem; line-height: 1; width: 40px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; }
+  .m-nav:disabled { opacity: 0.35; cursor: default; }
+  .m-note { font-size: 0.88rem; color: var(--text-sub); margin: 0 0 10px; }
+  .m-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .m-dow { text-align: center; font-size: 0.72rem; color: var(--text-sub); padding-bottom: 2px; }
+  .m-dow.sun { color: #c4473a; }
+  .m-day { font: inherit; min-width: 0; min-height: 58px; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.15; }
+  .m-day.blank { visibility: hidden; }
+  .m-day.out { opacity: 0.38; cursor: default; }
+  .m-day .dnum { font-size: 0.95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .m-day .dic { font-size: 0.78rem; letter-spacing: -1px; min-height: 1.2em; }
+  .m-day .dmeta { font-size: 0.6rem; color: var(--text-sub); min-height: 1.1em; }
+  .m-day .dmeta.office { color: var(--accent); font-weight: 700; }
+  .m-day.did { background: var(--accent-tint); border-color: var(--accent-bright); }
+  .m-day.did .dnum::after { content: " ✓"; color: var(--accent); font-size: 0.75rem; }
+  .m-day.today { box-shadow: inset 0 0 0 2px var(--accent-bright); }
+  .m-day.sel { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .m-day.sel .dmeta, .m-day.sel .dmeta.office, .m-day.sel .dnum::after { color: var(--surface); }
+  .legend { font-size: 0.78rem; color: var(--text-sub); margin: 8px 0 0; }
+  .m-sum { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 2px solid var(--text); margin: 16px 0 4px; font-variant-numeric: tabular-nums; }
+  .m-sum div { padding: 10px 8px 8px 0; border-bottom: 1px solid var(--rule); }
+  .m-sum b { display: block; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+  .m-sum b small { font-size: 0.85rem; font-weight: 600; color: var(--text-sub); }
+  .m-sum span { font-size: 0.78rem; color: var(--text-sub); }
+  .cal-card { margin-top: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 14px 18px 16px; }
+  .cal-title { font-weight: 700; }
+  .cal-note { margin: 2px 0 0; font-size: 0.86rem; color: var(--text-sub); }
+  .items { margin-top: 4px; }
+  .item { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 0.95rem; line-height: 1.6; }
+  .item:first-child { border-top: 0; }
+  .item dt { font-size: 0.86rem; font-weight: 700; color: var(--accent); }
+  .item dd.none { color: var(--text-sub); }
+  .item dd a { font-weight: 600; }
+
+  /* 루틴 카드 */
+  .recipe { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 12px 16px; margin: 10px 0; scroll-margin-top: 64px; }
+  .recipe summary { font-size: 1rem; font-weight: 700; color: var(--text); }
+  .recipe .r-meta { display: block; margin-top: 2px; font-size: 0.78rem; font-weight: 500; color: var(--text-sub); }
+  .recipe[open] summary { margin-bottom: 10px; }
+  .recipe ol, .recipe ul { font-size: 0.94rem; }
+  .recipe h4:first-of-type { margin-top: 4px; }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.84rem; color: var(--text-sub); }
+
+  @media (max-width: 760px) {
+    body { font-size: 16px; }
+    article { padding: 16px 16px 72px; }
+    h2 { font-size: 1.3rem; margin-top: 52px; }
+    .cal-card { padding: 12px 14px 14px; }
+    .item { grid-template-columns: 4.2rem minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .anchor { transition: none; }
+  }
+</style>
+</head>
+<body>
+<article>
+<header class="top">
+  <div class="eyebrow">Workout · 2026-11-16</div>
+  <h1>무릎 지키며 하는 겨울 운동</h1>
+  <p>근육을 지키는 게 목표예요. 먹는 건 <a href="https://seosimba.github.io/diet/">겨울 식단 노트</a>에 있어요.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="운동 페이지">
+  <a role="tab" href="#month" data-tab="month" aria-controls="month-panel">이번 달</a>
+  <a role="tab" href="#routine" data-tab="routine" aria-controls="routine-panel">루틴</a>
+  <a role="tab" href="#principles" data-tab="principles" aria-controls="principles-panel">원칙·근거</a>
+</nav>
+
+<section class="cal-wrap" id="month-panel" data-panel="month" role="tabpanel" aria-label="이번 달 운동">
+<h2 id="month">이번 달 운동</h2>
+<div id="cal"><p class="caption">자바스크립트가 켜져 있어야 캘린더가 보여요.</p></div>
+
+<h3 id="records">기록</h3>
+<p>2주마다 목요일 근력 날, 시작 전에 두 가지를 재요. 숫자가 그대로거나 늘면 근육을 지키고 있는 거예요.</p>
+<ul>
+  <li><strong>한쪽 다리 엉덩이 들기:</strong> 한쪽 발만 바닥에 대고 엉덩이를 끝까지 들었다 내리기. 자세가 무너지거나 무릎이 아프면 멈추고, 왼쪽·오른쪽 따로 세요</li>
+  <li><strong>30초 의자 일어나기:</strong> 늘 같은 의자에서, 팔은 가슴 앞에 엇갈리고 30초 동안 완전히 일어선 횟수를 세요</li>
+</ul>
+<div id="rec-table"></div>
+</section>
+
+<section id="routine-panel" data-panel="routine" role="tabpanel" aria-label="루틴">
+<h2 id="routine">루틴</h2>
+<p>모든 동작에서 <strong>무릎은 둘째 발가락 방향</strong>이에요. 안쪽으로 모이지 않게 해요.</p>
+
+<details class="recipe" id="r-home" open>
+  <summary>💪 집 근력 20분<span class="r-meta">주 2회 (월·목) · 3바퀴 · 동작 사이 30초 쉬기 · 장비 없이</span></summary>
+  <h4>하체</h4>
+  <ol>
+    <li><strong>엉덩이 들기 15회</strong> — 누워서 무릎을 세우고, 엉덩이를 조이며 들어 2초 멈췄다 내려요</li>
+    <li><strong>옆으로 누워 다리 들기 15회씩</strong> — 위쪽 다리를 곧게 펴고 발끝은 앞을 봐요. 무릎이 안쪽으로 모이는 걸 막아 주는 엉덩이 옆 근육이에요</li>
+    <li><strong>의자에 앉았다 일어나기 10~15회</strong> — 팔은 가슴 앞에 엇갈리고, 3초 동안 천천히 앉아요. 무릎이 불편하면 쿠션을 올려 의자를 높여요</li>
+    <li><strong>벽에 등 대고 버티기 30~45초</strong> — 무릎은 90도보다 얕게 굽혀요</li>
+  </ol>
+  <h4>상체·코어</h4>
+  <ol start="5">
+    <li><strong>팔굽혀펴기</strong> — 식탁이나 소파 팔걸이를 짚고 시작해요. 무릎을 바닥에 대지 않아서 무릎이 편해요. 쉬워지면 바닥으로</li>
+    <li><strong>플랭크 30초</strong> — 팔꿈치와 발끝으로 버텨요</li>
+    <li><strong>밴드 당기기 15회 (선택)</strong> — 집 운동엔 등 근육 동작이 없어서, 운동용 밴드가 하나 있으면 좋아요</li>
+  </ol>
+  <h4>얼마나 힘들게</h4>
+  <p>각 동작의 <strong>마지막 2~3회가 힘들 만큼</strong> 해요. 편하게 끝나면 다음 단계로 올려요.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>동작</th><th>쉬워지면</th></tr></thead>
+    <tbody>
+      <tr><td>엉덩이 들기</td><td>한쪽 다리로 10회씩</td></tr>
+      <tr><td>옆으로 다리 들기</td><td>20회씩, 맨 위에서 2초 멈추기</td></tr>
+      <tr><td>의자 일어나기</td><td>15회 → 내려갈 때 5초</td></tr>
+      <tr><td>팔굽혀펴기</td><td>식탁 → 의자 → 바닥</td></tr>
+      <tr><td>플랭크</td><td>45초 → 60초</td></tr>
+    </tbody>
+  </table></div>
+</details>
+
+<details class="recipe" id="r-bike">
+  <summary>🚴 실내자전거<span class="r-meta">주 2회 (수·토) · 30~40분 · 라이딩이 있는 날은 라이딩으로 대신</span></summary>
+  <ul>
+    <li><strong>안장 높이:</strong> 페달이 맨 아래 있을 때 무릎이 살짝(25~35도) 굽는 높이예요. 안장이 낮으면 무릎을 깊게 굽혀서 무릎 앞쪽에 부담이 가요</li>
+    <li><strong>강도:</strong> 말은 할 수 있지만 노래는 힘든 정도예요. 저항은 가볍게 하고, 빨리 돌려요(분당 80~90회)</li>
+    <li>무릎과 발이 일직선으로 움직이게 해요. 무릎이 안쪽으로 모이지 않게요</li>
+    <li>물 500mL를 옆에 두고 마셔요</li>
+  </ul>
+</details>
+
+<details class="recipe" id="r-yoga">
+  <summary>🧘 요가<span class="r-meta">주 1회 (금) · 수업이나 집에서 20~30분 · 자전거에도 도움이 돼요</span></summary>
+  <p>자전거를 타면 <strong>엉덩이 앞쪽, 허벅지 뒤, 허리·등</strong>이 굽은 자세로 오래 있어서 뻣뻣해지기 쉬워요. 요가로 여기를 풀어 주면 타는 자세가 편해져요. 직접 해 보니 자전거에 도움이 됐어요.</p>
+  <h4>자주 할 자세</h4>
+  <ul>
+    <li><strong>다운독</strong> — 허벅지 뒤·종아리</li>
+    <li><strong>누워서 4자 스트레칭</strong> — 엉덩이. 무릎을 비트는 비둘기 자세 대신 해요</li>
+    <li><strong>낮은 런지</strong> — 엉덩이 앞쪽. 뒤쪽 무릎 아래에 담요를 접어 깔아요</li>
+    <li><strong>고양이-소</strong>, <strong>스핑크스</strong> — 허리·등</li>
+    <li><strong>누워서 다리 올리기</strong> — 허벅지 뒤. 수건이나 스트랩을 발에 걸어요</li>
+  </ul>
+  <h4>뺄 자세</h4>
+  <ul>
+    <li>영웅 자세(무릎 꿇고 엉덩이를 발 사이로 내리기), 연꽃 자세, 깊은 비둘기 자세</li>
+    <li>아기 자세는 무릎이 불편하면 무릎 뒤에 담요를 끼우거나 빼요</li>
+    <li>수업이면 시작 전에 강사에게 무릎 얘기를 먼저 해요</li>
+  </ul>
+</details>
+
+<details class="recipe" id="r-hike">
+  <summary>⛰️ 등산<span class="r-meta">되는 주말 · 못 가면 쉬어요</span></summary>
+  <ul>
+    <li><strong>스틱 두 개</strong>를 써요. 내리막에서는 조금 길게 맞춰요</li>
+    <li>짧은 코스(2~3시간)부터 시작해요</li>
+    <li><strong>내리막은 보폭을 줄이고 천천히</strong> 내려와요. 무릎에 가장 부담이 큰 구간이에요</li>
+    <li>눈이나 얼음이 있으면 아이젠을 챙겨요</li>
+    <li>다음 날 무릎이 붓는지 봐요. 부으면 그 주는 하체 운동을 쉬어요</li>
+  </ul>
+</details>
+
+<details class="recipe" id="r-gym">
+  <summary>🏋️ 나중에 헬스장<span class="r-meta">무릎을 병원에서 확인한 뒤 · 선택</span></summary>
+  <p>집 운동이 쉬워지면 집 근력 하루를 헬스장으로 바꿔요. 10~15회 × 3세트, 무게는 앱에 기록해요.</p>
+  <ul>
+    <li>레그프레스 — 무릎은 90도까지만</li>
+    <li>힙 쓰러스트, 레그컬, 힙 어브덕션</li>
+    <li>랫풀다운, 시티드로우</li>
+  </ul>
+</details>
+</section>
+
+<section id="principles-panel" data-panel="principles" role="tabpanel" aria-label="원칙·근거">
+<h2 id="principles">원칙·근거</h2>
+<p>살을 빼는 건 주로 식단이 하고, 운동은 <strong>근육을 지키고 뺀 체중을 유지</strong>하는 역할이에요. 무릎 부담을 줄이려고 달리기·점프는 빼고, <strong>엉덩이 중심 동작 + 무릎은 얕게</strong>가 원칙이에요.</p>
+
+<h3 id="frame">일주일 틀</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>요일</th><th>운동</th></tr></thead>
+  <tbody>
+    <tr><td>월</td><td>💪 집 근력 20분</td></tr>
+    <tr><td>화</td><td>출근 — 쉬어요. 점심 먹고 걷기만</td></tr>
+    <tr><td>수</td><td>🚴 실내자전거 30~40분</td></tr>
+    <tr><td>목</td><td>💪 집 근력 20분 · 2주마다 📏 기록</td></tr>
+    <tr><td>금</td><td>🧘 요가</td></tr>
+    <tr><td>토</td><td>🚴 실내자전거 — 라이딩이 있으면 🚲 라이딩</td></tr>
+    <tr><td>일</td><td>⛰️ 등산 (되면) 또는 쉬기</td></tr>
+  </tbody>
+</table></div>
+<p class="caption">근력은 이틀 띄워요(월·목). 수업 요일이 정해지면 그에 맞춰 옮겨요.</p>
+
+<h3 id="enough">집 운동으로 충분할까</h3>
+<p>근육을 <strong>지키는 데는 키울 때보다 훨씬 적은 양</strong>으로 돼요. 횟수와 양을 크게 줄여도 <strong>강도만 유지하면</strong> 근력이 유지됐어요(Spiering 2021). 가벼운 무게도 지칠 때까지 하면 무거운 무게와 근육이 비슷하게 늘었어요(Schoenfeld 2017).</p>
+<p>그래서 집 운동도 <strong>"가볍게"가 아니라 "힘들게"</strong> 해야 해요. 쉬워지면 횟수를 늘리거나 한쪽 다리로 바꿔요.</p>
+
+<h3 id="knee">무릎 규칙</h3>
+<div class="callout warn"><span class="label">무릎 규칙</span>
+  <ul>
+    <li>피할 동작: 깊은 스쿼트, 런지, 박스 점프, 버피, 무거운 레그 익스텐션, 평영 발차기, 영웅 자세·연꽃 자세</li>
+    <li>모든 동작에서 <strong>무릎은 둘째 발가락 방향</strong>으로. 안쪽으로 모이지 않게 해요</li>
+    <li><strong>근육이 뻐근한 건 괜찮아요.</strong> 관절이 부은 듯 뻐근하거나, 찌르는 통증이 있거나, 다음 날 더 붓고 아프면 그날은 하체를 쉬고 그 동작은 빼거나 범위를 줄여요</li>
+    <li>무릎 앞쪽 통증 국제 합의문도 엉덩이·무릎 근력운동을 권해요. 원인은 정형외과에서 한 번 확인해요</li>
+  </ul>
+</div>
+
+<h3 id="cycling">근력과 자전거</h3>
+<p>겨울 하체 근력은 <strong>봄 자전거 실력</strong>으로 돌아와요. 지구력 훈련에 근력운동을 더하면 사이클 기록이 좋아진다는 근거가 가장 강했어요(무거운 근력운동 기준, Rønnestad & Mujika 2013). 기록하는 날 숫자를 봄에 비교해 봐요.</p>
+
+<h3 id="weight">체중과 무릎</h3>
+<p>체중 1kg이 줄면 걸을 때 한 걸음마다 무릎이 받는 힘이 약 4kg 줄어요(무릎 관절염 연구, Messier 2005). 식단으로 천천히 빼는 것도 무릎을 돕는 일이에요.</p>
+
+<h3 id="src">출처</h3>
+<ul>
+  <li><a href="https://pubmed.ncbi.nlm.nih.gov/33629972/">Spiering 2021 — 근력을 유지하는 최소 운동량</a></li>
+  <li><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017 — 가벼운 무게 vs 무거운 무게</a></li>
+  <li><a href="https://bjsm.bmj.com/content/50/14/839.short?rss=1">무릎 앞쪽 통증 국제 합의문 2016</a></li>
+  <li><a href="https://www.inigomujika.com/en/2013/08/13/optimizing-strength-training-for-running-and-cycling-endurance-performance-a-review-2/3040/">Rønnestad & Mujika 2013 — 근력운동과 사이클</a></li>
+  <li><a href="https://www.eurekalert.org/pub_releases/2005-06/jws-tio062805.php">Messier 2005 — 감량과 무릎 하중</a></li>
+</ul>
+</section>
+
+<footer>계획은 한 달 단위로 고쳐요. 수업 요일, 라이딩, 무릎 진료 결과에 따라 바뀌어요.</footer>
+</article>
+
+<script>
+(function () {
+  document.querySelectorAll('article h2[id], article h3[id]').forEach(function (h) {
+    var a = document.createElement('a');
+    a.className = 'anchor'; a.href = '#' + h.id; a.textContent = '#';
+    a.setAttribute('aria-label', '이 섹션 링크');
+    h.appendChild(a);
+  });
+
+  function ymd(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  var today = ymd(new Date());
+
+  /* 한 달 캘린더 — 요일별 기본 틀(WEEK)에 날짜별 예외(DAYS)를 덮어써요.
+     다음 달은 END를 늘리고 예외만 더하면 돼요. 한 운동은 DAYS[날짜].done 에 적어요. */
+  var START = '2026-11-16', END = '2026-12-31';
+  var K = {
+    str:  { i: '💪', n: '근력',   t: '집 근력 20분 — 하체 4가지 + 상체 2가지, 3바퀴', h: '#r-home' },
+    bike: { i: '🚴', n: '자전거', t: '실내자전거 30~40분 — 말은 할 수 있는 강도로', h: '#r-bike' },
+    ride: { i: '🚲', n: '라이딩', t: '실외 라이딩 — 이날은 실내자전거 대신, 물 500mL 더', h: '#r-bike' },
+    yoga: { i: '🧘', n: '요가',   t: '요가 20~30분 — 엉덩이 앞쪽·허벅지 뒤 풀기', h: '#r-yoga' },
+    hike: { i: '⛰️', n: '등산',   t: '등산 (되면) — 스틱, 짧은 코스, 내리막은 천천히. 못 가면 쉬어요', h: '#r-hike' }
+  };
+  var WEEK = [['hike'], ['str'], [], ['bike'], ['str'], ['yoga'], ['bike']]; /* 일~토 */
+  var DAYS = {
+    '2026-11-16': { items: [], note: '계획 세운 날 — 내일부터 시작해요' },
+    '2026-11-19': { test: true },
+    '2026-11-21': { items: ['ride'], note: '9시 라이딩' },
+    '2026-12-03': { test: true },
+    '2026-12-17': { test: true },
+    '2026-12-31': { test: true }
+  };
+  var MONTH_NOTE = {
+    '2026-11': '이번 달 할 일: <strong>무릎 진료 받아 보기</strong> — 그 전까지는 집 운동 중심이에요',
+    '2026-12': '집 근력이 쉬워지면 다음 단계로 · 진료 결과에 따라 헬스장·기구 필라테스를 더할지 정해요'
+  };
+  var DOW = ['일', '월', '화', '수', '목', '금', '토'];
+
+  function parse(d) { var p = d.split('-'); return new Date(+p[0], p[1] - 1, +p[2]); }
+  function md(d) { return +d.slice(5, 7) + '/' + +d.slice(8); }
+  function plan(d) {
+    if (d < START || d > END) return null;
+    var o = DAYS[d] || {}, dow = parse(d).getDay();
+    var office = o.office !== undefined ? o.office : dow === 2;
+    var items = o.items || (office ? [] : WEEK[dow]);
+    return { items: items, office: office, test: !!o.test, done: o.done || [], m: o.m || null,
+      note: o.note || (office ? '출근일 — 쉬어요. 점심 먹고 15~20분 걷기만 해요' : '') };
+  }
+  function monthsBetween() {
+    var a = [], y = +START.slice(0, 4), m = +START.slice(5, 7);
+    while (true) {
+      var k = y + '-' + String(m).padStart(2, '0');
+      a.push(k);
+      if (k >= END.slice(0, 7)) break;
+      if (++m > 12) { m = 1; y++; }
+    }
+    return a;
+  }
+  var months = monthsBetween();
+  var mi = months.indexOf(today.slice(0, 7));
+  if (mi < 0) mi = today > END ? months.length - 1 : 0;
+  var sel = null;
+  var box = document.getElementById('cal');
+
+  function monthDays(k) {
+    var y = +k.slice(0, 4), m = +k.slice(5, 7), n = new Date(y, m, 0).getDate(), a = [];
+    for (var i = 1; i <= n; i++) a.push(k + '-' + String(i).padStart(2, '0'));
+    return a;
+  }
+  function render() {
+    var k = months[mi], days = monthDays(k);
+    if (days.indexOf(sel) < 0 || !plan(sel)) {
+      sel = days.indexOf(today) >= 0 && plan(today) ? today : days.filter(function (d) { return plan(d); })[0];
+    }
+    var h = '<div class="m-head"><button type="button" class="m-nav" data-nav="-1" aria-label="지난달"' + (mi ? '' : ' disabled') + '>‹</button>' +
+      '<div class="m-title">' + k.slice(0, 4) + '년 ' + +k.slice(5) + '월</div>' +
+      '<button type="button" class="m-nav" data-nav="1" aria-label="다음 달"' + (mi < months.length - 1 ? '' : ' disabled') + '>›</button></div>';
+    if (MONTH_NOTE[k]) h += '<p class="m-note">' + MONTH_NOTE[k] + '</p>';
+    h += '<div class="m-grid">';
+    ['월', '화', '수', '목', '금', '토', '일'].forEach(function (w) { h += '<div class="m-dow' + (w === '일' ? ' sun' : '') + '">' + w + '</div>'; });
+    var lead = (parse(days[0]).getDay() + 6) % 7;
+    for (var i = 0; i < lead; i++) h += '<span class="m-day blank" aria-hidden="true"></span>';
+    days.forEach(function (d) {
+      var p = plan(d);
+      var cls = 'm-day' + (p ? '' : ' out') + (d === today ? ' today' : '') + (d === sel ? ' sel' : '') + (p && p.done.length ? ' did' : '');
+      var ic = p ? p.items.map(function (x) { return K[x].i; }).join('') + (p.test ? '📏' : '') : '';
+      var label = md(d) + (p ? ' ' + (p.items.map(function (x) { return K[x].n; }).join(', ') || (p.office ? '출근' : '쉬기')) : '');
+      h += '<button type="button" class="' + cls + '" data-date="' + d + '"' + (p ? '' : ' disabled') + ' aria-pressed="' + (d === sel) + '" aria-label="' + label + '">' +
+        '<span class="dnum">' + +d.slice(8) + '</span><span class="dic">' + ic + '</span>' +
+        '<span class="dmeta' + (p && p.office ? ' office">출근' : '">') + '</span></button>';
+    });
+    h += '</div><p class="legend">💪 집 근력 · 🚴 실내자전거 · 🚲 라이딩 · 🧘 요가 · ⛰️ 등산 · 📏 기록 · ✓ 한 날</p>';
+    h += summary(days);
+    h += card(sel);
+    box.innerHTML = h;
+  }
+  function summary(days) {
+    var c = { str: [0, 0], bike: [0, 0], yoga: [0, 0], hike: [0, 0] };
+    days.forEach(function (d) {
+      var p = plan(d);
+      if (!p) return;
+      p.items.forEach(function (x) {
+        var g = x === 'ride' ? 'bike' : x;
+        c[g][1]++;
+        if (p.done.indexOf(x) >= 0) c[g][0]++;
+      });
+    });
+    function cell(g, name) { return '<div><b>' + c[g][0] + '<small> / ' + c[g][1] + '</small></b><span>' + name + '</span></div>'; }
+    return '<div class="m-sum" aria-label="이번 달 한 횟수 / 계획">' + cell('str', '💪 근력') + cell('bike', '🚴 자전거') + cell('yoga', '🧘 요가') +
+      '<div><b>' + c.hike[0] + '<small>번</small></b><span>⛰️ 등산 (되면)</span></div></div>';
+  }
+  function card(d) {
+    if (!d) return '';
+    var p = plan(d);
+    var h = '<div class="cal-card"><div class="cal-title">' + DOW[parse(d).getDay()] + '요일 ' + md(d) +
+      (d === today ? ' <span class="tag">오늘</span>' : '') + (p.office ? ' <span class="tag">출근</span>' : '') + (p.test ? ' <span class="tag">기록</span>' : '') + '</div>' +
+      (p.note ? '<p class="cal-note">' + p.note + '</p>' : '') + '<dl class="items">';
+    p.items.forEach(function (x) {
+      h += '<div class="item"><dt>' + K[x].i + ' ' + K[x].n + '</dt><dd>' + K[x].t + ' · <a href="' + K[x].h + '">루틴</a>' +
+        (p.done.indexOf(x) >= 0 ? ' <span class="tag">했어요</span>' : '') + '</dd></div>';
+    });
+    if (p.test) {
+      h += '<div class="item"><dt>📏 기록</dt><dd>' + (p.m ? '엉덩이 들기 왼 ' + p.m.l + ' · 오 ' + p.m.r + ' · 의자 30초 ' + p.m.c + '회'
+        : '근력 전에 재요 — 한쪽 다리 엉덩이 들기(왼·오), 30초 의자 일어나기') + ' · <a href="#records">재는 법</a></dd></div>';
+    }
+    if (!p.items.length && !p.test) h += '<div class="item"><dt>😌 쉬기</dt><dd class="none">식후 15~20분 걷기면 충분해요</dd></div>';
+    return h + '</dl></div>';
+  }
+  function records() {
+    var rows = Object.keys(DAYS).filter(function (d) { return DAYS[d].test; }).sort();
+    var h = '<div class="table-wrap"><table><thead><tr><th>날짜</th><th>엉덩이 들기 왼</th><th>오</th><th>의자 30초</th></tr></thead><tbody>';
+    rows.forEach(function (d) {
+      var m = DAYS[d].m;
+      h += '<tr' + (d === today ? ' class="hl"' : '') + '><td>' + DOW[parse(d).getDay()] + ' ' + md(d) + '</td><td>' + (m ? m.l + '회' : '—') + '</td><td>' + (m ? m.r + '회' : '—') + '</td><td>' + (m ? m.c + '회' : '—') + '</td></tr>';
+    });
+    document.getElementById('rec-table').innerHTML = h + '</tbody></table></div>';
+  }
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b || b.disabled) return;
+    if (b.dataset.nav) { mi = Math.max(0, Math.min(months.length - 1, mi + +b.dataset.nav)); sel = null; render(); }
+    else if (b.dataset.date) { sel = b.dataset.date; render(); }
+  });
+  render();
+  records();
+
+  /* 탭 — 주소의 #해시가 어느 탭에 속하는지 보고 그 탭을 보여 줘요. #r-… 이면 루틴 카드를 펼쳐요. */
+  var TABS = ['month', 'routine', 'principles'];
+  var tabLinks = [].slice.call(document.querySelectorAll('.tabs a[role="tab"]'));
+  function setTab(t) {
+    document.documentElement.setAttribute('data-tab', t);
+    tabLinks.forEach(function (a) {
+      var on = a.getAttribute('data-tab') === t;
+      a.setAttribute('aria-selected', on ? 'true' : 'false');
+      a.tabIndex = on ? 0 : -1;
+    });
+  }
+  function route(scroll) {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id ? document.getElementById(id) : null;
+    var panel = el && el.closest('[data-panel]');
+    setTab(panel ? panel.getAttribute('data-panel') : 'month');
+    if (el && el.tagName === 'DETAILS') el.open = true;
+    if (!scroll) return;
+    if (!el || TABS.indexOf(id) >= 0) window.scrollTo(0, 0);
+    else el.scrollIntoView();
+  }
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+    var h = a.getAttribute('href');
+    if (h.length < 2) return;
+    e.preventDefault();
+    if (h !== location.hash) history.pushState(null, '', h);
+    route(true);
+  });
+  window.addEventListener('popstate', function () { route(true); });
+  document.querySelector('.tabs').addEventListener('keydown', function (e) {
+    var i = tabLinks.indexOf(document.activeElement);
+    if (i < 0) return;
+    var j = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabLinks.length - 1 }[e.key];
+    if (j !== undefined) { e.preventDefault(); tabLinks[(j + tabLinks.length) % tabLinks.length].focus(); }
+    else if (e.key === ' ') { e.preventDefault(); tabLinks[i].click(); }
+  });
+  window.addEventListener('hashchange', function () { route(true); });
+  route(!!location.hash);
+})();
+</script>
+</body>
+</html>
