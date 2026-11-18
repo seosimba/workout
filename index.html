@@ -34,10 +34,10 @@
 })();
 </script>
 <title>겨울 운동 노트</title>
-<meta name="description" content="무릎을 지키며 하는 겨울 운동 — 이번 주·다음 주 2주 계획">
+<meta name="description" content="무릎을 지키며 하는 겨울 운동 — 이번 주 계획과 그날 할 동작">
 <meta property="og:type" content="article">
 <meta property="og:title" content="겨울 운동 노트">
-<meta property="og:description" content="무릎을 지키며 하는 겨울 운동 — 이번 주·다음 주 2주 계획">
+<meta property="og:description" content="무릎을 지키며 하는 겨울 운동 — 이번 주 계획과 그날 할 동작">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
@@ -112,7 +112,7 @@
   summary { cursor: pointer; font-size: 0.92rem; font-weight: 600; color: var(--accent); }
   details[open] summary { margin-bottom: 8px; }
 
-  /* 탭 — 2주 계획이 항상 첫 화면, 탭 줄은 위에 붙어 있어요. JS가 꺼져 있으면 탭 없이 전부 보여요 */
+  /* 탭 — 이번 주 계획이 항상 첫 화면, 탭 줄은 위에 붙어 있어요. JS가 꺼져 있으면 탭 없이 전부 보여요 */
   .tabs { display: none; }
   .tabs-on .tabs { display: flex; position: sticky; top: 0; z-index: 5; gap: 2px; margin: 0 -16px 4px; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
   .tabs a { flex: 1 1 0; min-width: 0; text-align: center; padding: 12px 2px 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-sub); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
@@ -124,42 +124,38 @@
   .tabs-on .cal-wrap > h2:first-child { display: none; }
   .tabs-on [data-panel] > h2:first-child { margin-top: 20px; }
 
-  /* 2주 계획 */
-  .m-head { display: flex; align-items: center; justify-content: center; margin: 14px 0 6px; }
-  .m-title { font-weight: 800; font-size: 1.1rem; }
+  /* 한 주 계획 — 두 칸 */
+  .w-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 8px; }
+  .w-title { font-weight: 800; font-size: 1.1rem; text-align: center; }
+  .w-title small { font-weight: 600; font-size: 0.85rem; color: var(--text-sub); margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .w-nav { font: inherit; font-size: 1.25rem; line-height: 1; width: 42px; height: 36px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); cursor: pointer; }
+  .w-nav:disabled { opacity: 0.3; cursor: default; }
   .m-note { font-size: 0.88rem; color: var(--text-sub); margin: 0 0 10px; }
-  .m-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-  .m-dow { text-align: center; font-size: 0.72rem; color: var(--text-sub); padding-bottom: 2px; }
-  .m-dow.sun { color: #c4473a; }
-  .m-week { grid-column: 1 / -1; font-size: 0.74rem; font-weight: 700; color: var(--accent); margin: 6px 0 -1px 2px; }
-  .m-day { font: inherit; min-width: 0; min-height: 58px; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.15; }
-  .m-day.blank { visibility: hidden; }
-  .m-day.out { opacity: 0.38; cursor: default; }
-  .m-day .dnum { font-size: 0.95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .m-day .dic { font-size: 0.78rem; letter-spacing: -1px; min-height: 1.2em; }
-  .m-day .dmeta { font-size: 0.62rem; color: var(--text-sub); min-height: 1.1em; font-variant-numeric: tabular-nums; }
-  .m-day .dmeta.office { color: var(--accent); font-weight: 700; }
-  .m-day.did { background: var(--accent-tint); border-color: var(--accent-bright); }
-  .m-day.did .dnum::after { content: " ✓"; color: var(--accent); font-size: 0.75rem; }
-  .m-day.today { box-shadow: inset 0 0 0 2px var(--accent-bright); }
-  .m-day.sel { background: var(--accent); border-color: var(--accent); color: var(--surface); }
-  .m-day.sel .dmeta, .m-day.sel .dmeta.office, .m-day.sel .dnum::after { color: var(--surface); }
+  .w-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .w-day { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 10px 10px 9px; font-size: 0.84rem; line-height: 1.4; scroll-margin-top: 64px; }
+  .w-day.today { box-shadow: inset 0 0 0 2px var(--accent-bright); }
+  .w-day.did { background: var(--accent-tint); }
+  .w-day.out { opacity: 0.4; }
+  .w-date { font-size: 0.8rem; color: var(--text-sub); }
+  .w-date b { color: var(--text); font-size: 0.98rem; font-variant-numeric: tabular-nums; }
+  .w-it { font-weight: 700; margin-top: 8px; }
+  .w-it .w-k { color: var(--text); text-decoration: none; }
+  .w-at { font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .w-it.test { color: var(--accent); }
+  .w-it.test a, .w-it.test small { font-weight: 500; }
+  .w-sub { color: var(--text-sub); font-size: 0.78rem; }
+  .w-ex { list-style: none; margin: 3px 0 0; padding: 0; font-size: 0.79rem; line-height: 1.35; }
+  .w-ex li { padding: 3px 0; border-top: 1px solid var(--rule); }
+  .w-ex li:first-child { border-top: 0; }
+  .w-ex li span { color: var(--text-sub); white-space: nowrap; }
+  .w-ex li.skip s { opacity: 0.55; }
+  .w-ex li.skip span { color: var(--accent); }
+  .w-note { margin: 8px 0 0; font-size: 0.74rem; color: var(--text-sub); line-height: 1.4; }
+  .w-sum .w-row { display: flex; justify-content: space-between; gap: 6px; padding: 4px 0; border-top: 1px solid var(--rule); font-size: 0.82rem; }
+  .w-sum .w-row:first-of-type { border-top: 0; margin-top: 4px; }
+  .w-sum .w-row b { font-variant-numeric: tabular-nums; }
+  .w-sum .w-row b small { font-weight: 600; color: var(--text-sub); }
   .legend { font-size: 0.78rem; color: var(--text-sub); margin: 8px 0 0; }
-  .m-sum { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 2px solid var(--text); margin: 16px 0 4px; font-variant-numeric: tabular-nums; }
-  .m-sum div { padding: 10px 8px 8px 0; border-bottom: 1px solid var(--rule); }
-  .m-sum b { display: block; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
-  .m-sum b small { font-size: 0.85rem; font-weight: 600; color: var(--text-sub); }
-  .m-sum span { font-size: 0.78rem; color: var(--text-sub); }
-  .cal-card { margin-top: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 14px 18px 16px; }
-  .cal-title { font-weight: 700; }
-  .cal-note { margin: 2px 0 0; font-size: 0.86rem; color: var(--text-sub); }
-  .items { margin-top: 4px; }
-  .item { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 0.95rem; line-height: 1.6; }
-  .item:first-child { border-top: 0; }
-  .item dt { font-size: 0.86rem; font-weight: 700; color: var(--accent); }
-  .item dt small { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
-  .item dd.none { color: var(--text-sub); }
-  .item dd a { font-weight: 600; }
 
   /* 루틴 카드 */
   .recipe { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 12px 16px; margin: 10px 0; scroll-margin-top: 64px; }
@@ -179,8 +175,6 @@
     body { font-size: 16px; }
     article { padding: 16px 16px 72px; }
     h2 { font-size: 1.3rem; margin-top: 52px; }
-    .cal-card { padding: 12px 14px 14px; }
-    .item { grid-template-columns: 4.2rem minmax(0, 1fr); }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -200,13 +194,13 @@
 </header>
 
 <nav class="tabs" role="tablist" aria-label="운동 페이지">
-  <a role="tab" href="#plan" data-tab="plan" aria-controls="plan-panel">2주 계획</a>
+  <a role="tab" href="#plan" data-tab="plan" aria-controls="plan-panel">이번 주</a>
   <a role="tab" href="#routine" data-tab="routine" aria-controls="routine-panel">루틴</a>
   <a role="tab" href="#principles" data-tab="principles" aria-controls="principles-panel">원칙·근거</a>
 </nav>
 
-<section class="cal-wrap" id="plan-panel" data-panel="plan" role="tabpanel" aria-label="2주 계획">
-<h2 id="plan">2주 계획</h2>
+<section class="cal-wrap" id="plan-panel" data-panel="plan" role="tabpanel" aria-label="이번 주 계획">
+<h2 id="plan">이번 주 계획</h2>
 <div id="cal"><p class="caption">자바스크립트가 켜져 있어야 캘린더가 보여요.</p></div>
 
 <h3 id="records">기록</h3>
@@ -248,11 +242,11 @@
   <div class="table-wrap"><table>
     <thead><tr><th>동작</th><th>세트</th><th>방법</th></tr></thead>
     <tbody>
-      <tr><td>1 풀업</td><td>4×(최대−1)</td><td>손등이 나를 보게 어깨너비보다 조금 넓게. 턱이 바를 넘고, 팔을 다 펴서 내려와요</td></tr>
-      <tr><td>2 의자 고블릿 스쿼트</td><td>4×8</td><td>케틀벨을 가슴에 안고 3초 동안 내려가 의자에 엉덩이가 살짝 닿으면 바로 올라와요. 무릎은 둘째 발가락 방향</td></tr>
-      <tr><td>3 발 올린 팔굽혀펴기 <span class="tag">윗가슴</span></td><td>4×(최대−2)</td><td>발은 의자에, 손은 푸쉬업바에. 가슴을 바 사이로 깊게 내려요. 발이 높을수록 윗가슴에 더 걸려요</td></tr>
-      <tr><td>4 매달려 무릎 들기 <span class="tag">복부</span></td><td>3×10</td><td>무릎을 가슴 쪽으로 말아 올리며 골반을 들어요. 반동 없이, 내려올 때 천천히</td></tr>
-      <tr><td>5 데드버그 <span class="tag">복부</span></td><td>3×10</td><td>누워서 허리를 바닥에 붙인 채 팔다리를 반대로 천천히 뻗어요</td></tr>
+      <tr><td>1 풀업 <a href="https://www.youtube.com/watch?v=o1ABefvGcPg" target="_blank" rel="noopener">영상</a></td><td>4×(최대−1)</td><td>손등이 나를 보게 어깨너비보다 조금 넓게. 턱이 바를 넘고, 팔을 다 펴서 내려와요</td></tr>
+      <tr><td>2 의자 고블릿 스쿼트 <a href="https://www.youtube.com/watch?v=D1IEI-lfLxU" target="_blank" rel="noopener">영상</a></td><td>4×8</td><td>케틀벨을 가슴에 안고 3초 동안 내려가 의자에 엉덩이가 살짝 닿으면 바로 올라와요. 무릎은 둘째 발가락 방향</td></tr>
+      <tr><td>3 발 올린 팔굽혀펴기 <span class="tag">윗가슴</span> <a href="https://www.youtube.com/watch?v=XaGHzWWRzuY" target="_blank" rel="noopener">영상</a></td><td>4×(최대−2)</td><td>발은 의자에, 손은 푸쉬업바에. 가슴을 바 사이로 깊게 내려요. 발이 높을수록 윗가슴에 더 걸려요</td></tr>
+      <tr><td>4 매달려 무릎 들기 <span class="tag">복부</span> <a href="https://www.youtube.com/shorts/58LiWFl2wEU" target="_blank" rel="noopener">영상</a></td><td>3×10</td><td>무릎을 가슴 쪽으로 말아 올리며 골반을 들어요. 반동 없이, 내려올 때 천천히</td></tr>
+      <tr><td>5 데드버그 <span class="tag">복부</span> <a href="https://www.youtube.com/watch?v=TzE9l0n11Zk" target="_blank" rel="noopener">영상</a></td><td>3×10</td><td>누워서 허리를 바닥에 붙인 채 팔다리를 반대로 천천히 뻗어요</td></tr>
     </tbody>
   </table></div>
   <h4>마무리 3분</h4>
@@ -265,12 +259,12 @@
   <div class="table-wrap"><table>
     <thead><tr><th>동작</th><th>세트</th><th>방법</th></tr></thead>
     <tbody>
-      <tr><td>1 멈춤 고블릿 스쿼트</td><td>3×8</td><td>의자 높이까지 내려가 엉덩이를 대지 않고 2초 멈췄다 올라와요</td></tr>
-      <tr><td>2 친업</td><td>4×(최대−1)</td><td>손바닥이 나를 보게 어깨너비로. A의 풀업과 번갈아 해요</td></tr>
+      <tr><td>1 멈춤 고블릿 스쿼트 <a href="https://www.youtube.com/watch?v=3OhuUR49z0A" target="_blank" rel="noopener">영상</a></td><td>3×8</td><td>의자 높이까지 내려가 엉덩이를 대지 않고 2초 멈췄다 올라와요</td></tr>
+      <tr><td>2 친업 <a href="https://www.youtube.com/watch?v=Ymclmmae3Hg" target="_blank" rel="noopener">영상</a></td><td>4×(최대−1)</td><td>손바닥이 나를 보게 어깨너비로. A의 풀업과 번갈아 해요</td></tr>
             <tr><td>3 케틀벨 루마니안 데드리프트 <a href="https://www.youtube.com/watch?v=c0xqtlLMGTE" target="_blank" rel="noopener">영상</a></td><td>2×8~10</td><td>24kg을 몸 앞에 들고, 무릎은 살짝만 굽힌 채 엉덩이를 뒤로 빼며 내려요. 등은 평평하게, 케틀벨은 다리에 붙여서. 엉덩이·허벅지 뒤 운동이라 무릎 부담이 적어요</td></tr>
-<tr><td>4 케틀벨 힙 쓰러스트</td><td>3×12</td><td>소파 앞에 등을 기대고 케틀벨은 골반 위(수건 깔기). 맨 위 2초 — 무릎을 받쳐 주는 엉덩이라 하나만 남겨요</td></tr>
-      <tr><td>5 할로우 홀드 <span class="tag">복부</span></td><td>3×20초</td><td>누워서 허리를 바닥에 붙이고 어깨·다리를 살짝 들어 버텨요. 힘들면 무릎을 굽혀요</td></tr>
-      <tr><td>6 케틀벨 러시안 트위스트 <span class="tag">복부</span></td><td>3×10씩</td><td>앉아서 발은 바닥에 두고, 케틀벨을 양옆으로 옮겨요. 허리가 굽지 않게</td></tr>
+<tr><td>4 케틀벨 힙 쓰러스트 <a href="https://www.youtube.com/watch?v=ALV19uBjAJ8" target="_blank" rel="noopener">영상</a></td><td>3×12</td><td>소파 앞에 등을 기대고 케틀벨은 골반 위(수건 깔기). 맨 위 2초 — 무릎을 받쳐 주는 엉덩이라 하나만 남겨요</td></tr>
+      <tr><td>5 할로우 홀드 <span class="tag">복부</span> <a href="https://www.youtube.com/watch?v=1ObK7sfjVLY" target="_blank" rel="noopener">영상</a></td><td>3×20초</td><td>누워서 허리를 바닥에 붙이고 어깨·다리를 살짝 들어 버텨요. 힘들면 무릎을 굽혀요</td></tr>
+      <tr><td>6 케틀벨 러시안 트위스트 <span class="tag">복부</span> <a href="https://www.youtube.com/watch?v=PkGPokybYaU" target="_blank" rel="noopener">영상</a></td><td>3×10씩</td><td>앉아서 발은 바닥에 두고, 케틀벨을 양옆으로 옮겨요. 허리가 굽지 않게</td></tr>
     </tbody>
   </table></div>
   <p>마무리 3분은 A와 같아요.</p>
@@ -490,7 +484,7 @@
     '9:00 요가 · 14:00 스크린골프 — 자전거를 더 타고 싶은 주는 골프 대신 13:00 학원',
     '처음 2주는 집 앞 동네 산 한 바퀴(6~7km, 오르막 300m 안팎) · 라이딩은 최고기온 15℃ 넘는 날만'
   ];
-  /* 2주 계획 — 이번 주와 다음 주만 보여 줘요. 날짜별 예외는 DAYS 에 덮어써요.
+  /* 한 주 계획 — 7일을 두 칸으로 보여 줘요(‹ › 로 다른 주). 날짜별 예외는 DAYS 에 덮어써요.
      한 운동은 DAYS[날짜].done = ['strA'], 기록 숫자는 DAYS[날짜].m = {l, r, c, p}. 기록하는 날은 TEST0부터 2주마다. */
   var START = '2026-11-16', TEST0 = '2026-11-19';
   var DAYS = {
@@ -515,34 +509,66 @@
     return { items: items, office: office, test: o.test !== undefined ? o.test : isTest(d), done: o.done || [], m: o.m || null,
       note: o.note || (office ? '출근일 — 점심 먹고 걷기, 저녁에 되면 미니 10분' : WEEK_NOTE[dow]) };
   }
-  var mon = addDays(today, -((parse(today).getDay() + 6) % 7));
-  var days = [];
-  for (var di = 0; di < 14; di++) days.push(addDays(mon, di));
-  var sel = today;
+  /* 그날 할 동작 — 계획 칸에 그대로 보여 줘요. 루틴 카드 표를 고치면 여기도 같이 고쳐요.
+     [이름, 세트, 유튜브 경로, 'pre' = 기록 전날엔 빼요] */
+  var YT = 'https://www.youtube.com/';
+  var EX = {
+    strA: [['풀업', '4×(최대−1)', 'watch?v=o1ABefvGcPg'], ['의자 고블릿 스쿼트', '4×8', 'watch?v=D1IEI-lfLxU'],
+      ['발 올린 팔굽혀펴기', '4×(최대−2)', 'watch?v=XaGHzWWRzuY'], ['매달려 무릎 들기', '3×10', 'shorts/58LiWFl2wEU'], ['데드버그', '3×10', 'watch?v=TzE9l0n11Zk']],
+    strB: [['멈춤 고블릿 스쿼트', '3×8', 'watch?v=3OhuUR49z0A'], ['친업', '4×(최대−1)', 'watch?v=Ymclmmae3Hg'],
+      ['케틀벨 루마니안 데드리프트', '2×8~10', 'watch?v=c0xqtlLMGTE'], ['케틀벨 힙 쓰러스트', '3×12', 'watch?v=ALV19uBjAJ8'],
+      ['할로우 홀드', '3×20초', 'watch?v=1ObK7sfjVLY'], ['러시안 트위스트', '3×10씩', 'watch?v=PkGPokybYaU']],
+    mini: [['풀업', '2×(최대−2)', 'watch?v=o1ABefvGcPg'], ['매달려 무릎 들기', '2×10', 'shorts/58LiWFl2wEU']],
+    bike: [['로잉', '10분 편하게'], ['인클라인 덤벨 프레스', '3×8~10', 'shorts/W6cFl2V1yRQ'], ['케이블 로우', '3×10~12', 'shorts/YeQDG8uUE3M', 'pre'],
+      ['페이스풀', '2×12~15', 'watch?v=1ai8x3IqVrk', 'pre'], ['아래→위 플라이', '2×12 (되면)', 'watch?v=cy0ZPEztazY'], ['평로라', '60분 — 45분 쭉'],
+      ['리버스 크런치', '2×12~15', 'shorts/fSb6YW9eK2A'], ['팔로프 프레스', '2×10씩', 'watch?v=2sW5qodcOak']]
+  };
+  var thisMon = addDays(today, -((parse(today).getDay() + 6) % 7));
+  var wk = 0;
   var box = document.getElementById('cal');
 
+  function weekDays() { var m = addDays(thisMon, wk * 7), a = []; for (var i = 0; i < 7; i++) a.push(addDays(m, i)); return a; }
+  function wkName() { return wk === 0 ? '이번 주' : wk === 1 ? '다음 주' : wk === -1 ? '지난주' : wk > 0 ? wk + '주 뒤' : -wk + '주 전'; }
   function render() {
-    var h = '<div class="m-head"><div class="m-title">' + md(days[0]) + ' – ' + md(days[13]) + '</div></div>';
+    var days = weekDays();
+    var h = '<div class="w-head"><button type="button" class="w-nav" data-wk="-1" aria-label="지난주"' + (days[0] <= START ? ' disabled' : '') + '>‹</button>' +
+      '<div class="w-title">' + wkName() + '<small>' + md(days[0]) + ' – ' + md(days[6]) + '</small></div>' +
+      '<button type="button" class="w-nav" data-wk="1" aria-label="다음 주">›</button></div>';
     if (TODO) h += '<p class="m-note">' + TODO + '</p>';
-    h += '<div class="m-grid">';
-    ['월', '화', '수', '목', '금', '토', '일'].forEach(function (w) { h += '<div class="m-dow' + (w === '일' ? ' sun' : '') + '">' + w + '</div>'; });
-    days.forEach(function (d, n) {
-      if (n % 7 === 0) h += '<div class="m-week">' + (n ? '다음 주' : '이번 주') + '</div>';
-      var p = plan(d);
-      var cls = 'm-day' + (p ? '' : ' out') + (d === today ? ' today' : '') + (d === sel ? ' sel' : '') + (p && p.done.length ? ' did' : '');
-      var ic = p ? p.items.map(function (x) { return K[x.k].i; }).join('') + (p.test ? '📏' : '') : '';
-      var first = p && p.items[0] ? p.items[0].at.split(' ')[0] : '';
-      var label = md(d) + (p ? ' ' + (p.items.map(function (x) { return K[x.k].n + ' ' + x.at; }).join(', ') || (p.office ? '출근' : '쉬기')) : '');
-      h += '<button type="button" class="' + cls + '" data-date="' + d + '"' + (p ? '' : ' disabled') + ' aria-pressed="' + (d === sel) + '" aria-label="' + label + '">' +
-        '<span class="dnum">' + +d.slice(8) + '</span><span class="dic">' + ic + '</span>' +
-        '<span class="dmeta' + (p && p.office ? ' office">출근' : '">' + first) + '</span></button>';
-    });
-    h += '</div><p class="legend">💪 집 근력 · 🤸 미니 10분 · 🚴 실내자전거 · 🚲 라이딩 · 🧘 요가 · ⛰️ 등산 · ⛳ 골프 · 📏 기록 · ✓ 한 날 · 칸 아래 숫자는 가는 시간</p>';
-    h += summary();
-    h += card(sel);
+    h += '<div class="w-grid">' + days.map(dayCard).join('') + summary(days) + '</div>';
+    h += '<p class="legend">동작 이름을 누르면 영상이 열려요 · 운동 이름을 누르면 루틴 카드로 가요 · 📏 기록 · ✓ 한 것</p>';
     box.innerHTML = h;
   }
-  function summary() {
+  function exList(k, d) {
+    var pre = isTest(addDays(d, 1));
+    return '<ul class="w-ex">' + EX[k].map(function (e) {
+      var skip = pre && e[3] === 'pre';
+      var name = e[2] ? '<a href="' + YT + e[2] + '" target="_blank" rel="noopener">' + e[0] + '</a>' : e[0];
+      return '<li' + (skip ? ' class="skip"><s>' + name + '</s>' : '>' + name) + ' <span>' + (skip ? '기록 전날 빼요' : e[1]) + '</span></li>';
+    }).join('') + '</ul>';
+  }
+  function testLine(p) {
+    return '<div class="w-it test">📏 기록 먼저 <small>' + (p.m ? '엉덩이 들기 왼 ' + p.m.l + ' · 오 ' + p.m.r + ' · 의자 ' + p.m.c + (p.m.p != null ? ' · 풀업 ' + p.m.p : '')
+      : '엉덩이 들기 왼·오 · 의자 30초 · 풀업') + '</small> <a href="#records">재는 법</a></div>';
+  }
+  function dayCard(d) {
+    var p = plan(d), dow = parse(d).getDay();
+    var head = '<div class="w-date">' + DOW[dow] + ' <b>' + md(d) + '</b>' + (d === today ? ' <span class="tag">오늘</span>' : '') +
+      (p && p.office ? ' <span class="tag">출근</span>' : '') + '</div>';
+    if (!p) return '<div class="w-day out">' + head + '<div class="w-sub">계획 전</div></div>';
+    var h = '<div class="w-day' + (d === today ? ' today' : '') + (p.done.length ? ' did' : '') + '">' + head;
+    p.items.forEach(function (x) {
+      var k = K[x.k];
+      if (p.test && x.k === 'strB') h += testLine(p);
+      h += '<div class="w-it"><a class="w-k" href="' + k.h + '">' + k.i + ' ' + k.n + '</a> <span class="w-at">' + x.at + '</span>' + (p.done.indexOf(x.k) >= 0 ? ' ✓' : '') + '</div>';
+      h += EX[x.k] ? exList(x.k, d) : '<div class="w-sub">' + (x.t || k.t).split(' — ')[0] + '</div>';
+    });
+    if (p.test && !p.items.some(function (x) { return x.k === 'strB'; })) h += testLine(p);
+    if (!p.items.length) h += '<div class="w-it">😌 쉬기</div><div class="w-sub">식후 15~20분 걷기면 충분해요</div>';
+    if (p.note) h += '<p class="w-note">' + p.note + '</p>';
+    return h + '</div>';
+  }
+  function summary(days) {
     var c = { str: [0, 0], bike: [0, 0], yoga: [0, 0], hike: [0, 0], golf: [0, 0] };
     days.forEach(function (d) {
       var p = plan(d);
@@ -554,33 +580,13 @@
         if (p.done.indexOf(x.k) >= 0) c[g][0]++;
       });
     });
-    function cell(g, name) { return '<div><b>' + c[g][0] + '<small> / ' + c[g][1] + '</small></b><span>' + name + '</span></div>'; }
-    return '<div class="m-sum" aria-label="2주 동안 한 횟수 / 계획">' + cell('str', '💪 근력') + cell('bike', '🚴 자전거') + cell('yoga', '🧘 요가') +
-      cell('hike', '⛰️ 등산') + cell('golf', '⛳ 골프') + '</div><p class="caption">2주 동안 한 횟수 / 계획</p>';
-  }
-  function card(d) {
-    var p = plan(d);
-    if (!p) return '';
-    var h = '<div class="cal-card"><div class="cal-title">' + DOW[parse(d).getDay()] + '요일 ' + md(d) +
-      (d === today ? ' <span class="tag">오늘</span>' : '') + (p.office ? ' <span class="tag">출근</span>' : '') + (p.test ? ' <span class="tag">기록</span>' : '') + '</div>' +
-      (p.note ? '<p class="cal-note">' + p.note + '</p>' : '') + '<dl class="items">';
-    p.items.forEach(function (x, n) {
-      if (p.test && x.k === 'strB') h += test(p, x.at);
-      var k = K[x.k];
-      h += '<div class="item"><dt>' + k.i + ' ' + k.n + '<small>' + x.at + '</small></dt><dd>' + (x.t || k.t) + (k.h ? ' · <a href="' + k.h + '">루틴</a>' : '') +
-        (p.done.indexOf(x.k) >= 0 ? ' <span class="tag">했어요</span>' : '') + '</dd></div>';
-    });
-    if (p.test && !p.items.some(function (x) { return x.k === 'strB'; })) h += test(p, '');
-    if (!p.items.length && !p.test) h += '<div class="item"><dt>😌 쉬기</dt><dd class="none">식후 15~20분 걷기면 충분해요</dd></div>';
-    return h + '</dl></div>';
-  }
-  function test(p, at) {
-    return '<div class="item"><dt>📏 기록<small>' + (at ? '근력 전에' : '') + '</small></dt><dd>' + (p.m ? '엉덩이 들기 왼 ' + p.m.l + ' · 오 ' + p.m.r + ' · 의자 30초 ' + p.m.c + '회' + (p.m.p != null ? ' · 풀업 ' + p.m.p : '')
-      : '한쪽 다리 엉덩이 들기(왼·오), 30초 의자 일어나기, 풀업 최대') + ' · <a href="#records">재는 법</a></dd></div>';
+    function row(g, name) { return '<div class="w-row"><span>' + name + '</span><b>' + c[g][0] + '<small> / ' + c[g][1] + '</small></b></div>'; }
+    return '<div class="w-day w-sum" aria-label="' + wkName() + ' 한 횟수 / 계획"><div class="w-date"><b>' + wkName() + '</b> 한 것 / 계획</div>' +
+      row('str', '💪 근력') + row('bike', '🚴 자전거') + row('yoga', '🧘 요가') + row('hike', '⛰️ 등산') + row('golf', '⛳ 골프') + '</div>';
   }
   function records() {
-    var rows = [];
-    for (var d = TEST0; d <= days[13]; d = addDays(d, 14)) rows.push(d);
+    var rows = [], end = addDays(thisMon, 13);
+    for (var d = TEST0; d <= end; d = addDays(d, 14)) rows.push(d);
     var h = '<div class="table-wrap"><table><thead><tr><th>날짜</th><th>엉덩이 들기 왼</th><th>오</th><th>의자 30초</th><th>풀업</th></tr></thead><tbody>';
     rows.forEach(function (d) {
       var m = DAYS[d] && DAYS[d].m;
@@ -589,9 +595,9 @@
     document.getElementById('rec-table').innerHTML = h + '</tbody></table></div>';
   }
   box.addEventListener('click', function (e) {
-    var b = e.target.closest('button');
-    if (!b || b.disabled || !b.dataset.date) return;
-    sel = b.dataset.date; render();
+    var b = e.target.closest('button.w-nav');
+    if (!b || b.disabled) return;
+    wk += +b.dataset.wk; render();
   });
   render();
   records();
