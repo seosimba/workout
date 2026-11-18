@@ -34,10 +34,10 @@
 })();
 </script>
 <title>겨울 운동 노트</title>
-<meta name="description" content="무릎을 지키며 하는 겨울 운동 — 이번 주 계획과 그날 할 동작">
+<meta name="description" content="무릎을 지키며 하는 겨울 운동 — 오늘부터 8일 계획과 그날 할 동작">
 <meta property="og:type" content="article">
 <meta property="og:title" content="겨울 운동 노트">
-<meta property="og:description" content="무릎을 지키며 하는 겨울 운동 — 이번 주 계획과 그날 할 동작">
+<meta property="og:description" content="무릎을 지키며 하는 겨울 운동 — 오늘부터 8일 계획과 그날 할 동작">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
@@ -112,7 +112,7 @@
   summary { cursor: pointer; font-size: 0.92rem; font-weight: 600; color: var(--accent); }
   details[open] summary { margin-bottom: 8px; }
 
-  /* 탭 — 이번 주 계획이 항상 첫 화면, 탭 줄은 위에 붙어 있어요. JS가 꺼져 있으면 탭 없이 전부 보여요 */
+  /* 탭 — 오늘부터 8일 계획이 항상 첫 화면, 탭 줄은 위에 붙어 있어요. JS가 꺼져 있으면 탭 없이 전부 보여요 */
   .tabs { display: none; }
   .tabs-on .tabs { display: flex; position: sticky; top: 0; z-index: 5; gap: 2px; margin: 0 -16px 4px; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
   .tabs a { flex: 1 1 0; min-width: 0; text-align: center; padding: 12px 2px 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-sub); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
@@ -124,7 +124,7 @@
   .tabs-on .cal-wrap > h2:first-child { display: none; }
   .tabs-on [data-panel] > h2:first-child { margin-top: 20px; }
 
-  /* 한 주 계획 — 두 칸 */
+  /* 오늘부터 8일 계획 — 두 칸 */
   .w-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 8px; }
   .w-title { font-weight: 800; font-size: 1.1rem; text-align: center; }
   .w-title small { font-weight: 600; font-size: 0.85rem; color: var(--text-sub); margin-left: 4px; font-variant-numeric: tabular-nums; }
@@ -151,6 +151,7 @@
   .w-ex li.skip s { opacity: 0.55; }
   .w-ex li.skip span { color: var(--accent); }
   .w-note { margin: 8px 0 0; font-size: 0.74rem; color: var(--text-sub); line-height: 1.4; }
+  .w-sum { grid-column: 1 / -1; }
   .w-sum .w-row { display: flex; justify-content: space-between; gap: 6px; padding: 4px 0; border-top: 1px solid var(--rule); font-size: 0.82rem; }
   .w-sum .w-row:first-of-type { border-top: 0; margin-top: 4px; }
   .w-sum .w-row b { font-variant-numeric: tabular-nums; }
@@ -194,13 +195,13 @@
 </header>
 
 <nav class="tabs" role="tablist" aria-label="운동 페이지">
-  <a role="tab" href="#plan" data-tab="plan" aria-controls="plan-panel">이번 주</a>
+  <a role="tab" href="#plan" data-tab="plan" aria-controls="plan-panel">오늘부터</a>
   <a role="tab" href="#routine" data-tab="routine" aria-controls="routine-panel">루틴</a>
   <a role="tab" href="#principles" data-tab="principles" aria-controls="principles-panel">원칙·근거</a>
 </nav>
 
-<section class="cal-wrap" id="plan-panel" data-panel="plan" role="tabpanel" aria-label="이번 주 계획">
-<h2 id="plan">이번 주 계획</h2>
+<section class="cal-wrap" id="plan-panel" data-panel="plan" role="tabpanel" aria-label="오늘부터 8일 계획">
+<h2 id="plan">오늘부터 8일 계획</h2>
 <div id="cal"><p class="caption">자바스크립트가 켜져 있어야 캘린더가 보여요.</p></div>
 
 <h3 id="records">기록</h3>
@@ -437,7 +438,7 @@
 </ul>
 </section>
 
-<footer>이번 주와 다음 주만 보여 줘요. 가는 시간까지 정해 두면 갈 확률이 올라가요. 수업 시간, 라이딩, 무릎 진료 결과에 따라 바뀌어요.</footer>
+<footer>오늘부터 8일씩 보여 줘요(‹ › 로 앞뒤 8일). 가는 시간까지 정해 두면 갈 확률이 올라가요. 수업 시간, 라이딩, 무릎 진료 결과에 따라 바뀌어요.</footer>
 </article>
 
 <script>
@@ -483,7 +484,7 @@
     '9:00 요가 · 14:00 스크린골프 — 자전거를 더 타고 싶은 주는 골프 대신 13:00 학원',
     '처음 2주는 집 앞 동네 산 한 바퀴(6~7km, 오르막 300m 안팎) · 라이딩은 최고기온 15℃ 넘는 날만'
   ];
-  /* 한 주 계획 — 7일을 두 칸으로 보여 줘요(‹ › 로 다른 주). 날짜별 예외는 DAYS 에 덮어써요.
+  /* 오늘부터 8일(오늘 + 다음 7일)을 두 칸으로 보여 줘요(‹ › 로 8일씩). 날짜별 예외는 DAYS 에 덮어써요.
      한 운동은 DAYS[날짜].done = ['strA'], 기록 숫자는 DAYS[날짜].m = {l, r, c, p}. 기록하는 날은 TEST0부터 2주마다. */
   var START = '2026-11-16', TEST0 = '2026-11-19';
   var DAYS = {
@@ -524,16 +525,16 @@
       ['리버스 크런치', '2×12~15', 'watch?v=vCPewsVmhz8'], ['한 손 덤벨 들고 걷기', '2×30초씩 · 10~12kg', 'watch?v=y-hn_Ha1-RE']]
   };
   var thisMon = addDays(today, -((parse(today).getDay() + 6) % 7));
-  var wk = 0;
+  var SPAN = 8, wk = 0;
   var box = document.getElementById('cal');
 
-  function weekDays() { var m = addDays(thisMon, wk * 7), a = []; for (var i = 0; i < 7; i++) a.push(addDays(m, i)); return a; }
-  function wkName() { return wk === 0 ? '이번 주' : wk === 1 ? '다음 주' : wk === -1 ? '지난주' : wk > 0 ? wk + '주 뒤' : -wk + '주 전'; }
+  function weekDays() { var s = addDays(today, wk * SPAN), a = []; for (var i = 0; i < SPAN; i++) a.push(addDays(s, i)); return a; }
+  function wkName() { return wk === 0 ? '오늘부터 8일' : wk === 1 ? '그다음 8일' : wk === -1 ? '앞의 8일' : wk > 0 ? (wk * SPAN) + '일 뒤부터' : (-wk * SPAN) + '일 전부터'; }
   function render() {
     var days = weekDays();
-    var h = '<div class="w-head"><button type="button" class="w-nav" data-wk="-1" aria-label="지난주"' + (days[0] <= START ? ' disabled' : '') + '>‹</button>' +
-      '<div class="w-title">' + wkName() + '<small>' + md(days[0]) + ' – ' + md(days[6]) + '</small></div>' +
-      '<button type="button" class="w-nav" data-wk="1" aria-label="다음 주">›</button></div>';
+    var h = '<div class="w-head"><button type="button" class="w-nav" data-wk="-1" aria-label="앞의 8일"' + (days[0] <= START ? ' disabled' : '') + '>‹</button>' +
+      '<div class="w-title">' + wkName() + '<small>' + md(days[0]) + ' – ' + md(days[SPAN - 1]) + '</small></div>' +
+      '<button type="button" class="w-nav" data-wk="1" aria-label="다음 8일">›</button></div>';
     if (TODO) h += '<p class="m-note">' + TODO + '</p>';
     h += '<div class="w-grid">' + days.map(dayCard).join('') + summary(days) + '</div>';
     h += '<p class="legend">동작 이름을 누르면 영상이 열려요 · 운동 이름을 누르면 루틴 카드로 가요 · 📏 기록 · ✓ 한 것</p>';
