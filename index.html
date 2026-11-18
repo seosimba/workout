@@ -150,6 +150,9 @@
   .w-ex li span { color: var(--text-sub); white-space: nowrap; }
   .w-ex li.skip s { opacity: 0.55; }
   .w-ex li.skip span { color: var(--accent); }
+  .w-ex li b { font-weight: inherit; }
+  .w-ex li .ck { color: var(--accent); font-weight: 700; }
+  .w-ex li.miss > a, .w-ex li.miss > b { opacity: 0.5; }
   .w-note { margin: 8px 0 0; font-size: 0.74rem; color: var(--text-sub); line-height: 1.4; }
   .w-sum { grid-column: 1 / -1; }
   .w-sum .w-row { display: flex; justify-content: space-between; gap: 6px; padding: 4px 0; border-top: 1px solid var(--rule); font-size: 0.82rem; }
@@ -489,7 +492,7 @@
   var START = '2026-11-16', TEST0 = '2026-11-19';
   var DAYS = {
     '2026-11-16': { items: [], note: '계획 세운 날 — 내일부터 시작해요' },
-    '2026-11-18': { done: ['bike'], note: '첫 학원 — 로잉 10분·인클라인 덤벨 프레스·덤벨 로우 → 평로라 58분 34km 평균 120W (TSS 37, 강도 0.62) → 리버스 크런치 · 리어 레이즈·덤벨 들고 걷기는 다음 주에' },
+    '2026-11-18': { done: ['bike'], ex: ['로잉', '인클라인 덤벨 프레스', '인클라인 덤벨 로우', '평로라', '리버스 크런치'], note: '첫 학원 — 평로라 58분 34km 평균 120W (TSS 37, 강도 0.62) · 안 한 두 개는 다음 주에' },
     '2026-11-19': { note: '종일 집에 있는 날 — 근력 B 15:30, 준비운동 뒤 첫 기록 재기 · 어제 덤벨 로우를 해서 풀업이 평소보다 1~2개 적게 나올 수 있어요' },
     '2026-11-20': { note: '9:00 요가 · 바쁜 날이면 골프는 건너뛰어요' },
     '2026-11-21': { note: '라이딩 대신 등산 — 최고기온 1℃ 예보(15℃ 아래) · 장갑·모자, 길이 얼었으면 아이젠' }
@@ -507,7 +510,7 @@
     var o = DAYS[d] || {}, dow = parse(d).getDay();
     var office = o.office !== undefined ? o.office : dow === 2;
     var items = (o.items || WEEK[dow]).map(function (x) { return { k: x[0], at: x[1] || '', t: x[2] || '' }; });
-    return { items: items, office: office, test: o.test !== undefined ? o.test : isTest(d), done: o.done || [], m: o.m || null,
+    return { items: items, office: office, test: o.test !== undefined ? o.test : isTest(d), done: o.done || [], ex: o.ex || null, m: o.m || null,
       note: o.note || (office ? '출근일 — 점심 먹고 걷기, 저녁에 되면 미니 10분' : WEEK_NOTE[dow]) };
   }
   /* 그날 할 동작 — 계획 칸에 그대로 보여 줘요. 루틴 카드 표를 고치면 여기도 같이 고쳐요.
@@ -540,11 +543,16 @@
     h += '<p class="legend">동작 이름을 누르면 영상이 열려요 · 운동 이름을 누르면 루틴 카드로 가요 · 📏 기록 · ✓ 한 것</p>';
     box.innerHTML = h;
   }
-  function exList(k, d) {
+  /* did = 그날 한 동작 이름들(DAYS 의 ex). 있으면 한 건 ✓, 안 한 건 흐리게 */
+  function exList(k, d, did) {
     var pre = isTest(addDays(d, 1));
     return '<ul class="w-ex">' + EX[k].map(function (e) {
+      var name = e[2] ? '<a href="' + YT + e[2] + '" target="_blank" rel="noopener">' + e[0] + '</a>' : '<b>' + e[0] + '</b>';
+      if (did) {
+        var ok = did.indexOf(e[0]) >= 0;
+        return '<li class="' + (ok ? 'ok' : 'miss') + '">' + (ok ? '<span class="ck">✓</span> ' : '') + name + ' <span>' + (ok ? e[1] : '안 함') + '</span></li>';
+      }
       var skip = pre && e[3] === 'pre';
-      var name = e[2] ? '<a href="' + YT + e[2] + '" target="_blank" rel="noopener">' + e[0] + '</a>' : e[0];
       return '<li' + (skip ? ' class="skip"><s>' + name + '</s>' : '>' + name) + ' <span>' + (skip ? '기록 전날 빼요' : e[1]) + '</span></li>';
     }).join('') + '</ul>';
   }
@@ -562,7 +570,7 @@
       var k = K[x.k];
       if (p.test && x.k === 'strB') h += testLine(p);
       h += '<div class="w-it"><a class="w-k" href="' + k.h + '">' + k.i + ' ' + k.n + '</a> <span class="w-at">' + x.at + '</span>' + (p.done.indexOf(x.k) >= 0 ? ' ✓' : '') + '</div>';
-      h += EX[x.k] ? exList(x.k, d) : '<div class="w-sub">' + (x.t || k.t).split(' — ')[0] + '</div>';
+      h += EX[x.k] ? exList(x.k, d, p.ex) : '<div class="w-sub">' + (x.t || k.t).split(' — ')[0] + '</div>';
     });
     if (p.test && !p.items.some(function (x) { return x.k === 'strB'; })) h += testLine(p);
     if (!p.items.length) h += '<div class="w-it">😌 쉬기</div><div class="w-sub">식후 15~20분 걷기면 충분해요</div>';
