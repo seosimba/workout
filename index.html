@@ -249,6 +249,30 @@
   .gd-sum p { font-size: 0.82rem; color: var(--text-sub); margin: 6px 0 10px; }
   body.gd-on { overflow: hidden; }
   body.gd-on .tmr { display: none; }
+
+  /* 안내 — 순서 블록(한 줄씩). 끝난 건 위로 밀려 올라가고, 지금 블록은 진행만큼 채워져요 */
+  .gd-play { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .gd-play[hidden] { display: none; }
+  .gd-main { flex: none; min-height: 0; padding: 6px 0 4px; }
+  .gd-name { font-size: 1.5rem; margin: 2px 0 2px; }
+  .gd-big { font-size: 72px; }
+  .gd-cue { font-size: 1.35rem; min-height: 2rem; }
+  .gd-next { display: none; }
+  .gd-q { position: relative; flex: 1 1 auto; min-height: 120px; overflow-y: auto; list-style: none; margin: 6px 0 10px; padding: 0; scroll-behavior: smooth; }
+  .gd-q li { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; margin: 0 0 6px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); font-size: 0.92rem; font-weight: 700; overflow: hidden; }
+  .gd-q li i { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: color-mix(in srgb, var(--accent-bright) 22%, transparent); }
+  .gd-q li span, .gd-q li b { position: relative; }
+  .gd-q li b { font-variant-numeric: tabular-nums; color: var(--text-sub); white-space: nowrap; }
+  .gd-q li.rest { background: transparent; border-style: dashed; color: var(--text-sub); font-weight: 600; }
+  .gd-q li.cur { border: 2px solid var(--accent-bright); color: var(--text); }
+  .gd-q li.cur b { color: var(--accent); }
+  .gd-q li.done, .gd-q li.skip { opacity: 0.45; }
+  .gd-q li.done span::before { content: '✓ '; color: var(--accent); }
+  .gd-q li.skip span { text-decoration: line-through; }
+  @media (prefers-reduced-motion: reduce) { .gd-q { scroll-behavior: auto; } }
+  .gd-q li img { position: relative; flex: none; width: 52px; height: 34px; object-fit: cover; border-radius: 6px; margin-left: -6px; background: var(--border); }
+  .gd-q li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gd-q li.rest img { opacity: .7; }
 </style>
 </head>
 <body>
@@ -575,7 +599,7 @@
     var o = DAYS[d] || {}, dow = parse(d).getDay();
     var office = o.office !== undefined ? o.office : dow === 2;
     var items = (Array.isArray(o.items) ? o.items : WEEK[dow]).filter(function (x) { return x && K[x[0]]; }).map(function (x) { return { k: x[0], at: x[1] || '', t: x[2] || '' }; });
-    return { items: items, office: office, test: o.test !== undefined ? o.test : isTest(d), done: Array.isArray(o.done) ? o.done : [], ex: o.ex || null, cut: o.cut || null, m: o.m || null,
+    return { items: items, office: office, test: o.test !== undefined ? o.test : isTest(d), done: Array.isArray(o.done) ? o.done : [], ex: o.ex || null, cut: o.cut || null, blocks: o.blocks || null, m: o.m || null,
       note: o.note || (office ? '출근일 — 점심 먹고 걷기, 저녁에 되면 미니 10분' : WEEK_NOTE[dow]) };
   }
   /* 그날 할 동작 — 계획 칸에 그대로 보여 줘요. 루틴 카드 표를 고치면 여기도 같이 고쳐요.
@@ -617,20 +641,29 @@
     h += '<p class="legend">3×10 = 10개씩 3세트 · 최대 = 바른 자세로 끝까지 할 수 있는 개수 · 동작 이름을 누르면 영상이 열려요 · 운동 이름을 누르면 루틴 카드로 가요 · 📏 기록 · ✓ 한 것</p>';
     box.innerHTML = h;
   }
-  /* did = 그날 한 동작 이름들(DAYS 의 ex). 있으면 한 건 ✓, 안 한 건 흐리게 */
-  /* cut = 그날만 줄인 세트 {동작 이름: 세트}. 있으면 거기 없는 동작은 줄 그어요 */
-  function exList(k, d, did, cut) {
-    var pre = isTest(addDays(d, 1));
-    return '<ul class="w-ex">' + EX[k].map(function (e) {
+  /* 동작 블록 — EX 의 모든 동작(맨몸 대체 포함)을 이름으로 찾아요. 블록 = 이름·기본 세트·영상(+ 안내의 박자 규칙 G).
+     그날만 다른 조합이면 DAYS[날짜].blocks = { strB: [['맨몸 스쿼트', '2×12'], ['할로우 홀드'], …] } — 세트를 비우면 기본 세트 */
+  var LIB = {};
+  Object.keys(EX).forEach(function (k) { EX[k].forEach(function (e) { if (!LIB[e[0]]) LIB[e[0]] = e; if (e[4] && !LIB[e[4][0]]) LIB[e[4][0]] = e[4]; }); });
+  /* 그날 할 동작 — [{e: [이름, 세트, 영상], skip: 뺀 이유}]. 순서: blocks(자유 조합) → cut(줄인 세트, 없는 건 줄 긋기) → 기록 전날 pre 빼기 */
+  function dayList(k, d) {
+    var p = plan(d) || {}, pre = isTest(addDays(d, 1)), cut = p.cut;
+    if (p.blocks && p.blocks[k]) return p.blocks[k].map(function (b) { var L = LIB[b[0]] || [b[0], '', '']; return { e: [L[0], b[1] || L[1], L[2]], skip: '' }; });
+    return EX[k].map(function (e) {
       if (!KB && e[4]) e = e[4];
-      var name = e[2] ? '<a href="' + YT + e[2] + '" target="_blank" rel="noopener">' + e[0] + '</a>' : '<b>' + e[0] + '</b>';
+      if (cut) return cut[e[0]] ? { e: [e[0], cut[e[0]], e[2]], skip: '' } : { e: e, skip: '오늘은 빼요' };
+      return { e: e, skip: pre && e[3] === 'pre' ? '기록 전날 빼요' : '' };
+    });
+  }
+  /* did = 그날 한 동작 이름들(DAYS 의 ex). 있으면 한 건 ✓, 안 한 건 흐리게 */
+  function exList(k, d, did) {
+    return '<ul class="w-ex">' + dayList(k, d).map(function (it) {
+      var e = it.e, name = e[2] ? '<a href="' + YT + e[2] + '" target="_blank" rel="noopener">' + e[0] + '</a>' : '<b>' + e[0] + '</b>';
       if (did) {
         var ok = did.indexOf(e[0]) >= 0;
-        return '<li class="' + (ok ? 'ok' : 'miss') + '">' + (ok ? '<span class="ck">✓</span> ' : '') + name + ' <span>' + (ok ? (cut && cut[e[0]] || e[1]) : '안 함') + '</span></li>';
+        return '<li class="' + (ok ? 'ok' : 'miss') + '">' + (ok ? '<span class="ck">✓</span> ' : '') + name + ' <span>' + (ok ? e[1] : '안 함') + '</span></li>';
       }
-      var skip = cut ? !cut[e[0]] : pre && e[3] === 'pre';
-      var txt = skip ? (cut ? '오늘은 빼요' : '기록 전날 빼요') : (cut ? cut[e[0]] : e[1]);
-      return '<li' + (skip ? ' class="skip"><s>' + name + '</s>' : '>' + name) + ' <span>' + txt + '</span></li>';
+      return '<li' + (it.skip ? ' class="skip"><s>' + name + '</s>' : '>' + name) + ' <span>' + (it.skip || e[1]) + '</span></li>';
     }).join('') + '</ul>';
   }
   function testLine(p) {
@@ -647,7 +680,7 @@
       var k = K[x.k];
       if (p.test && x.k === 'strB') h += testLine(p);
       h += '<div class="w-it"><a class="w-k" href="' + k.h + '">' + k.i + ' ' + k.n + '</a> <span class="w-at">' + x.at + '</span>' + (p.done.indexOf(x.k) >= 0 ? ' ✓' : '') + '</div>';
-      h += EX[x.k] ? exList(x.k, d, p.ex, p.cut) : '<div class="w-sub">' + (x.t || k.t).split(' — ')[0] + '</div>';
+      h += EX[x.k] ? exList(x.k, d, p.ex) : '<div class="w-sub">' + (x.t || k.t).split(' — ')[0] + '</div>';
       if (EX[x.k] && p.done.indexOf(x.k) < 0 && (d === today || (d === addDays(today, -1) && !p.done.length)))
         h += '<button type="button" class="w-go" data-go="' + d + '|' + x.k + '">▶ 안내 시작</button>';
     });
@@ -732,7 +765,7 @@
   window.addEventListener('hashchange', function () { route(true); });
   route(!!location.hash);
   /* 운동 안내(아래 스크립트)가 그날 계획을 읽어 가요 */
-  window.WK = { plan: plan, EX: EX, KB: KB, K: K, YT: YT, md: md, isTest: isTest, addDays: addDays };
+  window.WK = { plan: plan, EX: EX, KB: KB, K: K, YT: YT, md: md, isTest: isTest, addDays: addDays, dayList: dayList, LIB: LIB };
 })();
 </script>
 <div id="tmr" class="tmr" data-state="idle">
@@ -903,6 +936,7 @@
       <div class="gd-note"></div>
       <div class="gd-next"></div>
     </div>
+    <ol class="gd-q" aria-label="순서"></ol>
     <div class="gd-msg" aria-live="polite"></div>
     <button type="button" class="gd-tap" data-g="tap" hidden>✓ 세트 끝</button>
     <div class="gd-ctl"><button type="button" class="gd-b" data-g="pause">⏸ 일시정지</button><button type="button" class="gd-b" data-g="skip">⏭ 넘기기</button></div>
@@ -965,16 +999,14 @@
   }
   function cyc(x) { var s = 0; x.t.forEach(function (p) { s += p[0]; }); return s; }
   function build(d, k) {
-    var p = WK.plan(d), pre = WK.isTest(WK.addDays(d, 1)), cut = p.cut, out = [];
+    var p = WK.plan(d), cut = p.cut || p.blocks, out = [];
     if (k !== 'mini' && k !== 'bike') out.push({ type: 'work', mode: 'hold', name: '준비운동', key: '', hold: cut ? 180 : 300, sets: 1, set: 1,
       note: '고양이-소 → 90/90 엉덩이 돌리기 → 옆으로 누워 다리 들기 → 맨몸 스쿼트 10회 → 매달리기 20초' });
     if (p.test && k === 'strB') out.push({ type: 'work', mode: 'free', name: '📏 기록 재기', key: '', sets: 1, set: 1, note: '엉덩이 들기 왼·오 · 30초 의자 일어나기 · 풀업 최대' });
-    WK.EX[k].map(function (e) { return !WK.KB && e[4] ? e[4] : e; }).filter(function (e) {
-      return cut ? !!cut[e[0]] : !(pre && e[3] === 'pre');
-    }).forEach(function (e) {
-      var g = G[e[0]] || { tap: 1, rest: 60 }, sp = spec(cut ? cut[e[0]] : e[1]);
+    WK.dayList(k, d).filter(function (it) { return !it.skip; }).forEach(function (it) {
+      var e = it.e, g = G[e[0]] || { tap: 1, rest: 60 }, sp = spec(e[1]);
       var mode = g.free ? 'free' : g.tap ? 'tap' : sp.hold ? 'hold' : sp.reps && g.t ? 'reps' : 'tap';
-      var base = { name: e[0], key: e[0], sets: sp.sets, mode: mode, reps: sp.reps, hold: sp.hold, t: g.t, side: !!g.side, yt: e[2] || '', note: cut ? cut[e[0]] : e[1] };
+      var base = { name: e[0], key: e[0], sets: sp.sets, mode: mode, reps: sp.reps, hold: sp.hold, t: g.t, side: !!g.side, yt: e[2] || '', note: e[1] };
       out.push(Object.assign({}, base, { type: 'move', sec: 90 }));  /* 동작 사이 1분 30초 (본인 11/19) */
       for (var s = 1; s <= sp.sets; s++) {
         (g.side ? ['왼쪽', '오른쪽'] : ['']).forEach(function (sd, j) {
@@ -995,7 +1027,7 @@
   var $ = function (s) { return root.querySelector(s); };
   var E = { prog: $('.gd-prog'), bar: $('.gd-bar i'), kind: $('.gd-kind'), name: $('.gd-name'), big: $('.gd-big'), cue: $('.gd-cue'), note: $('.gd-note'),
     next: $('.gd-next'), msg: $('.gd-msg'), tap: $('.gd-tap'), pause: $('[data-g="pause"]'), mute: $('[data-g="mute"]'), play: $('.gd-play'), sum: $('.gd-sum'),
-    list: $('.gd-list'), txt: $('.gd-txt') };
+    list: $('.gd-list'), txt: $('.gd-txt'), q: $('.gd-q') };
   var st = null, iv = null, lock = null, voice = null, mute = false;
   function now() { return Date.now(); }
 
@@ -1033,6 +1065,7 @@
     SND.audio();
     st = { d: d, k: k, steps: build(d, k), i: at || 0, t0: now(), pausedAt: null, cue: '', done: done || {}, skip: skip || {}, go: now(), off: 0, ps: null };
     if (!st.steps.length) { st = null; return; }
+    st.stat = []; st.qi = -1; queue();
     root.hidden = false; document.body.classList.add('gd-on');
     E.play.hidden = false; E.sum.hidden = true; E.msg.textContent = '';
     wake(true);
@@ -1078,6 +1111,7 @@
     if (x.type === 'work' && x.key && x.last) {
       var bag = skipped ? st.skip : st.done; bag[x.key] = (bag[x.key] || 0) + 1;
     }
+    st.stat[st.i] = x.type === 'work' && skipped ? 'skip' : 'done';
     if (auto && x.type === 'work') { if (x.mode === 'reps') speak((NUM[x.reps] || x.reps) + ', 세트 끝'); else if (x.mode === 'hold') SND.beep(2, 990, 0.25); }
     st.i++; st.t0 = now(); st.cue = ''; st.pausedAt = null;
     if (st.i >= st.steps.length) return finish();
@@ -1087,6 +1121,7 @@
     var key = cur().key || cur().name, i = st.i;
     while (i < st.steps.length && (st.steps[i].key || st.steps[i].name) === key) i++;
     if (cur().key && !st.done[cur().key]) st.skip[cur().key] = st.skip[cur().key] || 1;
+    for (var j = st.i; j < i; j++) st.stat[j] = 'skip';
     hush(); st.i = i; st.t0 = now(); st.cue = ''; st.pausedAt = null;
     if (st.i >= st.steps.length) return finish();
     save(); tick();
@@ -1100,12 +1135,13 @@
   function finish() {
     clearInterval(iv); iv = null; hush(); speak('오늘 운동 끝! 수고했어요');
     var lines = [], did = [], miss = [];
-    WK.EX[st.k].map(function (e) { return !WK.KB && e[4] ? e[4] : e; }).forEach(function (e) {
-      var n = st.done[e[0]] || 0, total = 0;
-      st.steps.forEach(function (x) { if (x.type === 'work' && x.key === e[0] && x.last) total++; });
-      if (!total && !st.skip[e[0]]) return;
-      lines.push('<li>' + e[0] + ' <span>' + (n ? n + '/' + total + '세트' : '안 함') + '</span></li>');
-      (n ? did : miss).push(n ? e[0] + ' ' + n + '세트' : e[0]);
+    var keys = [];
+    st.steps.forEach(function (x) { if (x.key && keys.indexOf(x.key) < 0) keys.push(x.key); });
+    keys.forEach(function (key) {
+      var n = st.done[key] || 0, total = 0;
+      st.steps.forEach(function (x) { if (x.type === 'work' && x.key === key && x.last) total++; });
+      lines.push('<li>' + key + ' <span>' + (n ? n + '/' + total + '세트' : '안 함') + '</span></li>');
+      (n ? did : miss).push(n ? key + ' ' + n + '세트' : key);
     });
     E.list.innerHTML = lines.join('');
     E.txt.value = WK.md(st.d) + ' ' + WK.K[st.k].n + ' 안내로 함 — ' + (did.join(', ') || '없음') + (miss.length ? ' / 안 함: ' + miss.join(', ') : '');
@@ -1116,6 +1152,42 @@
   function close() { clearInterval(iv); iv = null; hush(); wake(false); st = null; save(); root.hidden = true; document.body.classList.remove('gd-on'); }
 
   function fmt(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+  function label(x) {
+    if (x.lead) return '⏳ 시작 준비';
+    if (x.type === 'move') return '쉬기 → ' + x.name;
+    if (x.type === 'rest') return x.short ? '반대쪽으로' : '쉬기';
+    return x.name + (x.sets > 1 ? ' ' + x.set + '/' + x.sets : '') + (x.sd ? ' ' + x.sd : '');
+  }
+  function dtext(x) {
+    if (x.type !== 'work') return fmt(x.sec * 1000);
+    return x.mode === 'reps' ? x.reps + '개' : x.mode === 'hold' ? fmt(x.hold * 1000) : '누르기';
+  }
+  function queue() {
+    E.q.innerHTML = st.steps.map(function (x) {
+      var id = x.type !== 'rest' && x.yt ? x.yt.slice(-11) : '';
+      return '<li class="' + (x.type === 'work' ? '' : 'rest') + '"><i></i>' + (id ? '<img src="https://i.ytimg.com/vi/' + id + '/mqdefault.jpg" alt="" loading="lazy">' : '') +
+        '<span>' + label(x) + '</span><b>' + dtext(x) + '</b></li>';
+    }).join('');
+  }
+  function mark(x, e, D) {
+    var li = E.q.children;
+    if (st.qi !== st.i) {
+      for (var i = 0; i < li.length; i++) {
+        var c = st.steps[i].type === 'work' ? '' : 'rest';
+        if (i < st.i) c += ' ' + (st.stat[i] || 'done'); else if (i === st.i) c += ' cur';
+        li[i].className = c.trim();
+        if (i !== st.i) { li[i].firstChild.style.width = '0'; li[i].lastChild.textContent = dtext(st.steps[i]); }
+      }
+      var cur = li[st.i], prev = li[st.i - 1];
+      if (cur) E.q.scrollTop = Math.max(0, cur.offsetTop - (prev ? prev.offsetHeight + 6 : 0));
+      st.qi = st.i;
+    }
+    var c0 = li[st.i];
+    if (!c0) return;
+    c0.firstChild.style.width = isFinite(D) ? Math.min(100, e / D * 100) + '%' : '0';
+    c0.lastChild.textContent = x.type === 'work' && x.mode === 'reps' ? Math.min(x.reps, Math.floor(e / (cyc(x) * 1000)) + 1) + '/' + x.reps + '개'
+      : isFinite(D) ? fmt(D - e) : fmt(e);
+  }
   function draw(x, e, D) {
     var works = st.steps.filter(function (y) { return y.type === 'work'; }).length, wi = st.steps.slice(0, st.i + 1).filter(function (y) { return y.type === 'work'; }).length;
     root.setAttribute('data-mode', x.type);
@@ -1139,6 +1211,7 @@
     E.note.textContent = x.type === 'move' || x.type === 'work' ? (x.note || '') : '';
     var w = x.type === 'work' ? st.steps[st.i + 1] : nextWork(st.i);
     E.next.textContent = !w ? '마지막이에요' : '다음: ' + (w.type === 'rest' ? (w.short ? '반대쪽' : '쉬기 ' + w.sec + '초') : w.type === 'move' ? w.name : w.name + ' ' + w.set + '세트');
+    mark(x, e, D);
     var tapLabel = x.type === 'work' ? (x.mode === 'tap' ? '✓ 세트 끝' : x.mode === 'free' ? '✓ 끝, 다음으로' : '') : '▶ 바로 시작';
     E.tap.hidden = !tapLabel; E.tap.textContent = tapLabel;
     E.pause.textContent = st.pausedAt != null ? '▶ 계속' : '⏸ 일시정지';
