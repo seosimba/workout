@@ -329,7 +329,7 @@
 </details>
 
 <details class="recipe" id="r-strA" open>
-  <summary>💪 근력 A — 풀업 · 스쿼트 · 윗가슴 · 복부<span class="r-meta">월 15:30 · 30분 · 풀업·스쿼트는 세트 사이 90초, 나머지 60초</span></summary>
+  <summary>💪 근력 A — 풀업 · 스쿼트 · 윗가슴 · 복부<span class="r-meta">월 15:30 · 30분 · 세트 사이 풀업·스쿼트 90초, 팔굽혀펴기 60초, 매달려 들기 45초, 데드버그 30초</span></summary>
   <h4>준비 5분 (A·B 같음)</h4>
   <p>고양이-소 5회 → 90/90 엉덩이 돌리기 좌우 5회 → 옆으로 누워 다리 들기 좌우 10회 → 맨몸 스쿼트 10회 (얕게) → 풀업바 매달리기 20초</p>
   <div class="table-wrap"><table>
@@ -779,7 +779,7 @@
     <div class="tmr-presets">
       <div class="tmr-row"><span>쉬기</span><button type="button" class="tmr-b" data-rest="60">60초</button><button type="button" class="tmr-b" data-rest="90">90초</button><button type="button" class="tmr-b" data-rest="120">120초</button></div>
       <div class="tmr-row"><span>버티기</span><button type="button" class="tmr-b" data-hold="20">20초</button><button type="button" class="tmr-b" data-hold="30">30초</button></div>
-      <p class="tmr-tip">풀업·친업·스쿼트는 90초, 나머지 60초 · 버티기는 3초 준비하고 시작해요 · <button type="button" class="tmr-link" data-act="test">소리 시험</button><span class="tmr-wl"></span></p>
+      <p class="tmr-tip">풀업·친업·스쿼트 90초 · 힘든 동작 60초 · 복부는 30초면 돼요 · 버티기는 3초 준비하고 시작해요 · <button type="button" class="tmr-link" data-act="test">소리 시험</button><span class="tmr-wl"></span></p>
     </div>
     <div class="tmr-sr" aria-live="polite"></div>
   </div>
@@ -959,28 +959,29 @@
   var WK = window.WK, SND = window.WK_SND || { audio: function () {}, beep: function () {} };
   var root = document.getElementById('guide');
   if (!WK || !root) return;
-  /* 동작 이름별 규칙 — t: [[초, 말], …] 한 번의 박자 · rest: 세트 사이 쉬기(초) · tap: 눌러서 끝 · side: 왼쪽·오른쪽 따로 · free: 다른 기기로 하고 눌러서 넘김 */
+  /* 세트 사이 쉬기 기준(11/19): 여러 관절 쓰는 큰 동작 90초 · 힘든 동작 60초 · 쉬운 하체·어깨 45초 · 복부 30초 · 동작 사이는 따로 90초
+     동작 이름별 규칙 — t: [[초, 말], …] 한 번의 박자 · rest: 세트 사이 쉬기(초) · tap: 눌러서 끝 · side: 왼쪽·오른쪽 따로 · free: 다른 기기로 하고 눌러서 넘김 */
   var G = {
     '풀업': { tap: 1, rest: 90 },
     '친업': { t: [[2, '올라가요'], [3, '내려와요']], rest: 90 },
     '맨몸 스쿼트': { t: [[3, '내려가요'], [1, '올라와요']], rest: 90 },
     '발 올린 팔굽혀펴기': { tap: 1, rest: 60 },
-    '매달려 무릎 들기': { t: [[1, '올려요'], [2, '내려요']], rest: 60 },
-    '데드버그': { t: [[2, '뻗어요'], [1, '돌아와요']], rest: 60 },
-    '벽 짚고 한 다리 데드리프트': { t: [[3, '내려가요'], [1, '올라와요']], rest: 60, side: 1 },
-    '소파 힙 쓰러스트': { t: [[1, '올려요'], [2, '버텨요'], [1, '내려요']], rest: 60 },
+    '매달려 무릎 들기': { t: [[1, '올려요'], [2, '내려요']], rest: 45 },
+    '데드버그': { t: [[2, '뻗어요'], [1, '돌아와요']], rest: 30 },
+    '벽 짚고 한 다리 데드리프트': { t: [[3, '내려가요'], [1, '올라와요']], rest: 45, side: 1 },
+    '소파 힙 쓰러스트': { t: [[1, '올려요'], [2, '버텨요'], [1, '내려요']], rest: 45 },
     '케틀벨 힙 쓰러스트': { t: [[1, '올려요'], [2, '버텨요'], [1, '내려요']], rest: 60 },
     '케틀벨 루마니안 데드리프트': { t: [[3, '내려가요'], [1, '올라와요']], rest: 60 },
-    '할로우 홀드': { rest: 60 },
-    '러시안 트위스트': { t: [[1, '왼쪽'], [1, '오른쪽']], rest: 60 },
-    '맨몸 러시안 트위스트': { t: [[1, '왼쪽'], [1, '오른쪽']], rest: 60 },
+    '할로우 홀드': { rest: 30 },
+    '러시안 트위스트': { t: [[1, '왼쪽'], [1, '오른쪽']], rest: 30 },
+    '맨몸 러시안 트위스트': { t: [[1, '왼쪽'], [1, '오른쪽']], rest: 30 },
     '로잉': { rest: 0 },
     '인클라인 덤벨 프레스': { t: [[3, '내려요'], [1, '밀어요']], rest: 90 },
     '인클라인 덤벨 로우': { t: [[1, '당겨요'], [2, '내려요']], rest: 60 },
-    '엎드려 리어 레이즈': { t: [[1, '들어요'], [2, '내려요']], rest: 60 },
+    '엎드려 리어 레이즈': { t: [[1, '들어요'], [2, '내려요']], rest: 45 },
     '평로라': { free: 1 },
-    '리버스 크런치': { t: [[1, '말아 올려요'], [2, '내려요']], rest: 60 },
-    '한 손 덤벨 들고 걷기': { rest: 60, side: 1 }
+    '리버스 크런치': { t: [[1, '말아 올려요'], [2, '내려요']], rest: 30 },
+    '한 손 덤벨 들고 걷기': { rest: 45, side: 1 }
   };
   var NUM = ['', '하나', '둘', '셋', '넷', '다섯', '여섯', '일곱', '여덟', '아홉', '열', '열하나', '열둘', '열셋', '열넷', '열다섯', '열여섯', '열일곱', '열여덟', '열아홉', '스물'];
   var KEY = 'workout:guide:v1';
