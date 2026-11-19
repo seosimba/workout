@@ -238,6 +238,7 @@
   .gd-tap[hidden] { display: none; }
   .gd-ctl { display: flex; gap: 10px; }
   .gd-b { flex: 1; font: inherit; font-size: 1.05rem; font-weight: 700; min-height: 60px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+  .gd-links { display: flex; justify-content: space-between; gap: 8px; }
   .gd-link { font: inherit; font-size: 0.85rem; border: 0; background: none; color: var(--text-sub); text-decoration: underline; min-height: 40px; margin-top: 4px; cursor: pointer; }
   .gd[data-paused="1"] .gd-big, .gd[data-paused="1"] .gd-cue { opacity: 0.45; }
   .gd-sum { text-align: left; }
@@ -954,7 +955,7 @@
     <div class="gd-msg" aria-live="polite"></div>
     <button type="button" class="gd-tap" data-g="tap" hidden>✓ 세트 끝</button>
     <div class="gd-ctl"><button type="button" class="gd-b" data-g="pause">⏸ 일시정지</button><button type="button" class="gd-b" data-g="skip">⏭ 넘기기</button></div>
-    <button type="button" class="gd-link" data-g="skipex">이 동작 통째로 빼기</button>
+    <div class="gd-links"><button type="button" class="gd-link" data-g="skipex">이 동작 통째로 빼기</button><button type="button" class="gd-link" data-g="snd">🔈 소리: 툭 — 바꾸기</button></div>
   </div>
   <div class="gd-sum" hidden>
     <h3>오늘 운동 끝!</h3>
@@ -1050,6 +1051,7 @@
   if ('speechSynthesis' in window) { pickVoice(); try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {} }
   /* 아이폰 Safari는 cancel() 바로 뒤의 speak()를 빼먹어요 — 지운 뒤엔 0.15초 있다가 말해요 */
   var cut0 = 0;
+  function sndLabel() { var b = root.querySelector('[data-g="snd"]'); if (b) b.textContent = '🔈 소리: ' + SETS[style].n + ' — 바꾸기'; }
   function say(t) {
     try {
       var u = new SpeechSynthesisUtterance(t);
@@ -1065,6 +1067,7 @@
   function hush() { cut0 = now(); try { speechSynthesis.cancel(); } catch (e) {} }
   /* 똑·띵 소리 — 짧은 소리 파일을 만들어 오디오 요소로 틀어요(무음 스위치를 켜도 나요). 「▶ 안내 시작」을 누를 때 잠금을 풀어요 */
   /* parts = [[주파수, 크기, 줄어드는 시간(ms)], …] — 짧게 톡 하고 사라지는 소리(햅틱 느낌) */
+  var seed = 12345;
   function wav(parts, ms) {
     var sr = 44100, n = Math.floor(sr * ms / 1000), b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
     function w(o, x) { for (var i = 0; i < x.length; i++) v.setUint8(o + i, x.charCodeAt(i)); }
@@ -1072,19 +1075,32 @@
     v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
     for (var i = 0; i < n; i++) {
       var t = i / sr, y = 0;
-      parts.forEach(function (q) { y += q[1] * Math.sin(2 * Math.PI * q[0] * t) * Math.exp(-t * 1000 / q[2]); });
+      parts.forEach(function (q) {
+        var env = q[1] * Math.exp(-t * 1000 / q[2]);
+        if (q[0] < 0) { seed = (seed * 16807) % 2147483647; y += env * (seed / 1073741823.5 - 1) * Math.sin(2 * Math.PI * -q[0] * t); }
+        else y += env * Math.sin(2 * Math.PI * q[0] * t);
+      });
       y *= Math.min(1, i / 40, (n - i) / 200);
       v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, y)) * 30000, true);
     }
     return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
   }
+  /* 소리 고르기 — 툭(낮은 소리) · 시계(틱·톡 번갈아, 짧은 딸깍) · 박자만(쉬는 시간엔 소리 없이 개수 셀 때만 툭) */
+  var END = [[523, 0.12, 220], [784, 0.05, 140]];
+  var SETS = {
+    thud: { n: '툭', lo: [[[800, 0.02, 1.5], [120, 0.1, 12]], 50], hi: [[[1000, 0.02, 1.5], [180, 0.1, 12]], 50], cd: [[[900, 0.03, 2], [150, 0.13, 14]], 60] },
+    clock: { n: '시계', lo: [[[-2400, 0.07, 1.1]], 25], hi: [[[-1500, 0.07, 1.4]], 25], cd: [[[-1900, 0.09, 1.8]], 30] },
+    tempo: { n: '박자만' }
+  };
+  var ORDER = ['thud', 'clock', 'tempo'], style = 'thud', tock = 0;
+  try { style = localStorage.getItem('workout:guide:snd') || 'thud'; if (!SETS[style]) style = 'thud'; } catch (e) {}
   var SFX = null;
   function sfxInit() {
     if (SFX) return;
     SFX = {};
+    var set = SETS[style].lo ? SETS[style] : SETS.thud;
     /* 이어폰 기준(11/19 본인: 더 낮고 작게 ×2 — 지금 120Hz·크기 0.1) — lo = 매초 툭 · hi = 방향 바뀔 때 조금 높은 툭 · cd = 버티기 끝 3초 · end = 버티기 끝 부드러운 띵 */
-    [['lo', [[800, 0.02, 1.5], [120, 0.1, 12]], 50], ['hi', [[1000, 0.02, 1.5], [180, 0.1, 12]], 50],
-     ['cd', [[900, 0.03, 2], [150, 0.13, 14]], 60], ['end', [[523, 0.12, 220], [784, 0.05, 140]], 600]].forEach(function (a) {
+    [['lo'].concat(set.lo), ['hi'].concat(set.hi), ['cd'].concat(set.cd), ['end', END, 600]].forEach(function (a) {
       try {
         var el = new Audio(wav(a[1], a[2])); el.preload = 'auto'; SFX[a[0]] = el;
         el.muted = true;
@@ -1095,6 +1111,7 @@
     });
   }
   function sfx(k) {
+    if (style === 'clock' && k === 'lo' && (tock = 1 - tock)) k = 'hi';
     if (mute || !SFX || !SFX[k]) return;
     try { var el = SFX[k]; el.currentTime = 0; var pr = el.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
   }
@@ -1117,7 +1134,7 @@
   function nextWork(i) { for (var j = i + 1; j < st.steps.length; j++) if (st.steps[j].type === 'work') return st.steps[j]; return null; }
 
   function begin(d, k, at, done, skip, resume) {
-    SND.audio(); sfxInit();
+    SND.audio(); sfxInit(); sndLabel();
     st = { d: d, k: k, steps: build(d, k), i: at || 0, t0: now(), pausedAt: null, cue: '', done: done || {}, skip: skip || {}, go: now(), off: 0, ps: null };
     if (!st.steps.length) { st = null; return; }
     st.stat = []; st.qi = -1; queue();
@@ -1138,7 +1155,7 @@
         var tk = isFinite(D) ? r : Math.floor(e / 1000);
         /* 말하는 초엔 똑을 건너뛰어요(소리 파일이 음성을 끊지 않게) */
         var spk = x.type !== 'work' ? [30, 15, 10, 5, 3, 2, 1] : x.mode === 'hold' ? [60, 10] : [];
-        if (st.sec !== tk && !(x.mode === 'free' && x.type === 'work')) { var first = st.sec == null; st.sec = tk; if (!first && spk.indexOf(tk) < 0) sfx(isFinite(D) && r <= 3 ? 'cd' : 'lo'); }
+        if (st.sec !== tk && style !== 'tempo' && !(x.mode === 'free' && x.type === 'work')) { var first = st.sec == null; st.sec = tk; if (!first && spk.indexOf(tk) < 0) sfx(isFinite(D) && r <= 3 ? 'cd' : 'lo'); }
       }
       if (x.type === 'rest' || x.type === 'move') {
         if (e < 400) cue('s', function () {
@@ -1295,6 +1312,11 @@
     else if (g === 'skip') { hush(); advance(false, cur().type === 'work'); }
     else if (g === 'skipex') skipEx();
     else if (g === 'pause') pause();
+    else if (g === 'snd') {
+      style = ORDER[(ORDER.indexOf(style) + 1) % ORDER.length];
+      try { localStorage.setItem('workout:guide:snd', style); } catch (e) {}
+      SFX = null; sfxInit(); sndLabel(); setTimeout(function () { sfx('lo'); }, 120); setTimeout(function () { sfx('lo'); }, 1120);
+    }
     else if (g === 'mute') { mute = !mute; if (mute) hush(); b.textContent = mute ? '🔇 음성 끔' : '🔊 음성'; }
     else if (g === 'end') { if (st.finished || window.confirm('운동을 여기서 끝낼까요?')) { if (!st.finished) finish(); } }
     else if (g === 'copy') {
