@@ -975,7 +975,7 @@
       var g = G[e[0]] || { tap: 1, rest: 60 }, sp = spec(cut ? cut[e[0]] : e[1]);
       var mode = g.free ? 'free' : g.tap ? 'tap' : sp.hold ? 'hold' : sp.reps && g.t ? 'reps' : 'tap';
       var base = { name: e[0], key: e[0], sets: sp.sets, mode: mode, reps: sp.reps, hold: sp.hold, t: g.t, side: !!g.side, yt: e[2] || '', note: cut ? cut[e[0]] : e[1] };
-      out.push(Object.assign({}, base, { type: 'move', sec: 60 }));  /* 동작 사이 60초 (본인 11/19) */
+      out.push(Object.assign({}, base, { type: 'move', sec: 90 }));  /* 동작 사이 1분 30초 (본인 11/19) */
       for (var s = 1; s <= sp.sets; s++) {
         (g.side ? ['왼쪽', '오른쪽'] : ['']).forEach(function (sd, j) {
           if (j) out.push(Object.assign({}, base, { type: 'rest', sec: 5, set: s, short: 1, sd: sd }));
@@ -1055,14 +1055,12 @@
         else if ((r === 15 || r === 10 || r === 5) && x.sec > r) cue('r' + r, function () { speak(r + '초 전'); });
         else if (r <= 3 && r >= 1) cue('c' + r, function () { SND.beep(1, 660, 0.12); speak(['', '하나', '둘', '셋'][r], true); });
       } else if (x.mode === 'reps') {
-        var c = cyc(x) * 1000, n = Math.floor(e / c), off = e - n * c, j = 0, acc = 0;
-        while (j < x.t.length - 1 && off >= (acc + x.t[j][0]) * 1000) { acc += x.t[j][0]; j++; }
-        cue(n + '.' + j, function () {
-          var w = x.t[j][1];
-          if (n === 0 && j === 0) speak('시작' + (x.sd ? ', ' + x.sd : '') + ', ' + w, true);
-          else if (j === 0) speak((NUM[n] || n) + (n === x.reps - 1 ? ', 마지막' : ''));
-          else if (n === 0) speak(w);
-          else SND.beep(1, 520, 0.08);
+        /* 1초마다 똑 — 방향이 바뀌는 초(예: 스쿼트 3초 내려간 뒤 올라올 때)는 높은 소리, 한 번이 끝나면 숫자 */
+        var c = cyc(x) * 1000, n = Math.floor(e / c), sec = Math.floor((e - n * c) / 1000), turns = [], acc = 0;
+        x.t.forEach(function (p) { turns.push(acc); acc += p[0]; });
+        cue(n + '.' + sec, function () {
+          if (sec === 0) speak(n === 0 ? '시작' + (x.sd ? ', ' + x.sd : '') : (NUM[n] || n) + (n === x.reps - 1 ? ', 마지막' : ''), true);
+          else SND.beep(1, turns.indexOf(sec) > 0 ? 880 : 520, 0.08);
         });
       } else if (x.mode === 'hold') {
         if (e < 400) cue('s', function () { speak('시작' + (x.sd ? ', ' + x.sd : '') + (x.name === '준비운동' ? ', 준비운동 ' + desc(x) : ''), true); });
