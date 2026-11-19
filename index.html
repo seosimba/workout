@@ -1119,6 +1119,8 @@
   function sfx(k) {
     if (style === 'clock' && k === 'lo' && (tock = 1 - tock)) k = 'hi';
     if (mute || !SFX || !SFX[k]) return;
+    /* 음성이 말하는 중이면 똑은 건너뛰어요 — 아이폰에선 소리 파일과 음성이 겹치면 한쪽이 끊겨요 */
+    try { if (k !== 'end' && ('speechSynthesis' in window) && (speechSynthesis.speaking || speechSynthesis.pending)) return; } catch (e) {}
     try { var el = SFX[k]; el.currentTime = 0; var pr = el.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
   }
   function wake(on) {
