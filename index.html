@@ -955,7 +955,7 @@
     <div class="gd-msg" aria-live="polite"></div>
     <button type="button" class="gd-tap" data-g="tap" hidden>✓ 세트 끝</button>
     <div class="gd-ctl"><button type="button" class="gd-b" data-g="pause">⏸ 일시정지</button><button type="button" class="gd-b" data-g="skip">⏭ 넘기기</button></div>
-    <div class="gd-links"><button type="button" class="gd-link" data-g="skipex">이 동작 통째로 빼기</button><button type="button" class="gd-link" data-g="snd">🔈 소리: 툭 — 바꾸기</button></div>
+    <div class="gd-links"><button type="button" class="gd-link" data-g="skipex">이 동작 통째로 빼기</button><button type="button" class="gd-link" data-g="snd">🔈 소리: 나무 — 바꾸기</button></div>
   </div>
   <div class="gd-sum" hidden>
     <h3>오늘 운동 끝!</h3>
@@ -1073,38 +1073,40 @@
   function hush() { cut0 = now(); try { speechSynthesis.cancel(); } catch (e) {} }
   /* 똑·띵 소리 — 짧은 소리 파일을 만들어 오디오 요소로 틀어요(무음 스위치를 켜도 나요). 「▶ 안내 시작」을 누를 때 잠금을 풀어요 */
   /* parts = [[주파수, 크기, 줄어드는 시간(ms)], …] — 짧게 톡 하고 사라지는 소리(햅틱 느낌) */
-  var seed = 12345;
   function wav(parts, ms) {
     var sr = 44100, n = Math.floor(sr * ms / 1000), b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
     function w(o, x) { for (var i = 0; i < x.length; i++) v.setUint8(o + i, x.charCodeAt(i)); }
     w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
     v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    var ph = parts.map(function () { return 0; }), fin = sr * 0.005, fout = sr * 0.015;
     for (var i = 0; i < n; i++) {
       var t = i / sr, y = 0;
-      parts.forEach(function (q) {
-        var env = q[1] * Math.exp(-t * 1000 / q[2]);
-        if (q[0] < 0) { seed = (seed * 16807) % 2147483647; y += env * (seed / 1073741823.5 - 1) * Math.sin(2 * Math.PI * -q[0] * t); }
-        else y += env * Math.sin(2 * Math.PI * q[0] * t);
+      parts.forEach(function (q, k) {
+        /* q = [주파수, 크기, 줄어드는 ms, 처음에 더 높은 만큼(Hz), 그 높이가 내려오는 ms] — 4·5번째가 있으면 음이 툭 떨어지는 나무 소리 */
+        var env = q[1] * Math.exp(-t * 1000 / q[2]), f = q[0] + (q[3] ? q[3] * Math.exp(-t * 1000 / q[4]) : 0);
+        ph[k] += 2 * Math.PI * f / sr;
+        y += env * Math.sin(ph[k]);
       });
-      y *= Math.min(1, i / 40, (n - i) / 200);
+      y *= (i < fin ? 0.5 - 0.5 * Math.cos(Math.PI * i / fin) : 1) * (n - i < fout ? 0.5 - 0.5 * Math.cos(Math.PI * (n - i) / fout) : 1);
       v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, y)) * 30000, true);
     }
     return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
   }
-  /* 소리 고르기 — 툭(낮은 소리) · 시계(틱·톡 번갈아, 짧은 딸깍) · 박자만(쉬는 시간엔 소리 없이 개수 셀 때만 툭) */
+  /* 소리 고르기(11/20 Codex·Gemini 공통 추천) — 나무(기본: 부드럽게 시작해 음이 떨어지는 소리, 쉬는 시간·동작 중간은 약하게, 방향 바뀔 때만 또렷하게)
+     · 툭(이전 소리) · 박자만(쉬는 시간엔 소리 없이 개수 셀 때만). 시계(노이즈)는 높은 소리가 많아 뺐어요 */
   var END = [[523, 0.12, 220], [784, 0.05, 140]];
   var SETS = {
     thud: { n: '툭', lo: [[[800, 0.02, 1.5], [120, 0.1, 12]], 50], hi: [[[1000, 0.02, 1.5], [180, 0.1, 12]], 50], cd: [[[900, 0.03, 2], [150, 0.13, 14]], 60] },
-    clock: { n: '시계', lo: [[[-2400, 0.07, 1.1]], 25], hi: [[[-1500, 0.07, 1.4]], 25], cd: [[[-1900, 0.09, 1.8]], 30] },
+    wood: { n: '나무', lo: [[[110, 0.045, 20, 110, 12]], 80], hi: [[[160, 0.085, 24, 140, 12]], 90], cd: [[[140, 0.09, 24, 130, 12]], 90] },
     tempo: { n: '박자만' }
   };
-  var ORDER = ['thud', 'clock', 'tempo'], style = 'thud', tock = 0;
-  try { style = localStorage.getItem('workout:guide:snd') || 'thud'; if (!SETS[style]) style = 'thud'; } catch (e) {}
+  var ORDER = ['wood', 'thud', 'tempo'], style = 'wood';
+  try { style = localStorage.getItem('workout:guide:snd') || 'wood'; if (!SETS[style]) style = 'wood'; } catch (e) {}
   var SFX = null;
   function sfxInit() {
     if (SFX) return;
     SFX = {};
-    var set = SETS[style].lo ? SETS[style] : SETS.thud;
+    var set = SETS[style].lo ? SETS[style] : SETS.wood;
     /* 이어폰 기준(11/19 본인: 더 낮고 작게 ×2 — 지금 120Hz·크기 0.1) — lo = 매초 툭 · hi = 방향 바뀔 때 조금 높은 툭 · cd = 버티기 끝 3초 · end = 버티기 끝 부드러운 띵 */
     [['lo'].concat(set.lo), ['hi'].concat(set.hi), ['cd'].concat(set.cd), ['end', END, 600]].forEach(function (a) {
       try {
@@ -1117,7 +1119,6 @@
     });
   }
   function sfx(k) {
-    if (style === 'clock' && k === 'lo' && (tock = 1 - tock)) k = 'hi';
     if (mute || !SFX || !SFX[k]) return;
     /* 음성이 말하는 중이면 똑은 건너뛰어요 — 아이폰에선 소리 파일과 음성이 겹치면 한쪽이 끊겨요 */
     try { if (k !== 'end' && ('speechSynthesis' in window) && (speechSynthesis.speaking || speechSynthesis.pending)) return; } catch (e) {}
