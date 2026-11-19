@@ -1034,16 +1034,48 @@
 
   function pickVoice() { try { voice = speechSynthesis.getVoices().filter(function (v) { return /^ko/i.test(v.lang); })[0] || null; } catch (e) {} }
   if ('speechSynthesis' in window) { pickVoice(); try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {} }
-  function speak(t, flush) {
-    if (mute || !('speechSynthesis' in window)) return;
+  /* 아이폰 Safari는 cancel() 바로 뒤의 speak()를 빼먹어요 — 지운 뒤엔 0.15초 있다가 말해요 */
+  var cut0 = 0;
+  function say(t) {
     try {
-      if (flush) speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(t);
       u.lang = 'ko-KR'; u.rate = 1.05; if (voice) u.voice = voice;
       speechSynthesis.speak(u);
     } catch (e) {}
   }
-  function hush() { try { speechSynthesis.cancel(); } catch (e) {} }
+  function speak(t, flush) {
+    if (mute || !('speechSynthesis' in window)) return;
+    try { if (flush && (speechSynthesis.speaking || speechSynthesis.pending)) hush(); } catch (e) {}
+    if (now() - cut0 < 150) setTimeout(function () { if (!mute) say(t); }, 150); else say(t);
+  }
+  function hush() { cut0 = now(); try { speechSynthesis.cancel(); } catch (e) {} }
+  /* 똑·띵 소리 — 짧은 소리 파일을 만들어 오디오 요소로 틀어요(무음 스위치를 켜도 나요). 「▶ 안내 시작」을 누를 때 잠금을 풀어요 */
+  function wav(freq, ms) {
+    var sr = 22050, n = Math.floor(sr * ms / 1000), b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
+    function w(o, x) { for (var i = 0; i < x.length; i++) v.setUint8(o + i, x.charCodeAt(i)); }
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    for (var i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.sin(2 * Math.PI * freq * i / sr) * 22000 * Math.min(1, i / 150, (n - i) / 300), true);
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+  }
+  var SFX = null;
+  function sfxInit() {
+    if (SFX) return;
+    SFX = {};
+    [['lo', 620, 60], ['hi', 1050, 90], ['cd', 880, 170], ['end', 990, 500]].forEach(function (a) {
+      try {
+        var el = new Audio(wav(a[1], a[2])); el.preload = 'auto'; SFX[a[0]] = el;
+        el.muted = true;
+        var pr = el.play();
+        if (pr && pr.then) pr.then(function () { el.pause(); el.currentTime = 0; el.muted = false; }, function () { el.muted = false; });
+        else { el.pause(); el.muted = false; }
+      } catch (e) {}
+    });
+  }
+  function sfx(k) {
+    if (mute || !SFX || !SFX[k]) return;
+    try { var el = SFX[k]; el.currentTime = 0; var pr = el.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+  }
   function wake(on) {
     if (!('wakeLock' in navigator)) return;
     if (!on) { if (lock) lock.release().catch(function () {}); lock = null; return; }
@@ -1063,7 +1095,7 @@
   function nextWork(i) { for (var j = i + 1; j < st.steps.length; j++) if (st.steps[j].type === 'work') return st.steps[j]; return null; }
 
   function begin(d, k, at, done, skip, resume) {
-    SND.audio();
+    SND.audio(); sfxInit();
     st = { d: d, k: k, steps: build(d, k), i: at || 0, t0: now(), pausedAt: null, cue: '', done: done || {}, skip: skip || {}, go: now(), off: 0, ps: null };
     if (!st.steps.length) { st = null; return; }
     st.stat = []; st.qi = -1; queue();
@@ -1071,7 +1103,7 @@
     E.play.hidden = false; E.sum.hidden = true; E.msg.textContent = '';
     wake(true);
     if (resume) { st.pausedAt = 0; st.ps = now(); E.msg.textContent = '이어서 할 수 있어요 — 「계속」을 누르세요'; }
-    else speak(WK.K[k].n + ' 시작할게요', true);
+    else speak(WK.K[k].n + ' 시작할게요');
     save(); clearInterval(iv); iv = setInterval(tick, 100); tick();
   }
   function cue(key, fn) { if (st.cue !== key) { st.cue = key; fn(); } }
@@ -1080,6 +1112,12 @@
     var x = cur(), e = el(), D = dur(x), left = D - e, r = Math.ceil(left / 1000);
     if (st.pausedAt == null) {
       if (left <= 0) return advance(true);
+      if (x.mode !== 'reps' || x.type !== 'work') {
+        var tk = isFinite(D) ? r : Math.floor(e / 1000);
+        /* 말하는 초엔 똑을 건너뛰어요(소리 파일이 음성을 끊지 않게) */
+        var spk = x.type !== 'work' ? [30, 15, 10, 5, 3, 2, 1] : x.mode === 'hold' ? [60, 10] : [];
+        if (st.sec !== tk && !(x.mode === 'free' && x.type === 'work')) { var first = st.sec == null; st.sec = tk; if (!first && spk.indexOf(tk) < 0) sfx(isFinite(D) && r <= 3 ? 'cd' : 'lo'); }
+      }
       if (x.type === 'rest' || x.type === 'move') {
         if (e < 400) cue('s', function () {
           var w = nextWork(st.i);
@@ -1087,22 +1125,22 @@
         });
         else if (r === 30 && x.sec >= 60) cue('30', function () { speak('30초 전'); });
         else if ((r === 15 || r === 10 || r === 5) && x.sec > r) cue('r' + r, function () { speak(r + '초 전'); });
-        else if (r <= 3 && r >= 1) cue('c' + r, function () { SND.beep(1, 660, 0.12); speak(['', '하나', '둘', '셋'][r], true); });
+        else if (r <= 3 && r >= 1) cue('c' + r, function () { speak(['', '하나', '둘', '셋'][r]); });
       } else if (x.mode === 'reps') {
         /* 1초마다 똑 — 방향이 바뀌는 초(예: 스쿼트 3초 내려간 뒤 올라올 때)는 높은 소리, 한 번이 끝나면 숫자 */
         var c = cyc(x) * 1000, n = Math.floor(e / c), sec = Math.floor((e - n * c) / 1000), turns = [], acc = 0;
         x.t.forEach(function (p) { turns.push(acc); acc += p[0]; });
         cue(n + '.' + sec, function () {
-          if (sec === 0) speak(n === 0 ? '시작' + (x.sd ? ', ' + x.sd : '') : (NUM[n] || n) + (n === x.reps - 1 ? ', 마지막' : ''), true);
-          else SND.beep(1, turns.indexOf(sec) > 0 ? 880 : 520, 0.08);
+          if (sec === 0) { speak(n === 0 ? '시작' + (x.sd ? ', ' + x.sd : '') : (NUM[n] || n) + (n === x.reps - 1 ? ', 마지막' : '')); }
+          else sfx(turns.indexOf(sec) > 0 ? 'hi' : 'lo');
         });
       } else if (x.mode === 'hold') {
-        if (e < 400) cue('s', function () { speak('시작' + (x.sd ? ', ' + x.sd : '') + (x.name === '준비운동' ? ', 준비운동 ' + desc(x) : ''), true); });
+        if (e < 400) cue('s', function () { speak('시작' + (x.sd ? ', ' + x.sd : '') + (x.name === '준비운동' ? ', 준비운동 ' + desc(x) : '')); });
         else if (x.hold >= 120 && r === 60) cue('60', function () { speak('1분 남았어요'); });
         else if (r === 10 && x.hold >= 20) cue('10', function () { speak('10초'); });
-        else if (r <= 3) cue('c' + r, function () { SND.beep(1, 660, 0.12); });
+        else if (r <= 3) cue('c' + r, function () {});
       } else if (e < 400) cue('s', function () {
-        speak('시작, ' + (x.mode === 'free' ? x.name + ', 끝나면 눌러요' : x.name + ' ' + x.set + '세트' + (x.sd ? ', ' + x.sd : '') + (x.set === 1 ? ', 끝나면 화면을 눌러요' : '')), true);
+        speak('시작, ' + (x.mode === 'free' ? x.name + ', 끝나면 눌러요' : x.name + ' ' + x.set + '세트' + (x.sd ? ', ' + x.sd : '') + (x.set === 1 ? ', 끝나면 화면을 눌러요' : '')));
       });
     }
     draw(x, e, D);
@@ -1113,8 +1151,8 @@
       var bag = skipped ? st.skip : st.done; bag[x.key] = (bag[x.key] || 0) + 1;
     }
     st.stat[st.i] = x.type === 'work' && skipped ? 'skip' : 'done';
-    if (auto && x.type === 'work') { if (x.mode === 'reps') speak((NUM[x.reps] || x.reps) + ', 세트 끝'); else if (x.mode === 'hold') SND.beep(2, 990, 0.25); }
-    st.i++; st.t0 = now(); st.cue = ''; st.pausedAt = null;
+    if (auto && x.type === 'work') { if (x.mode === 'reps') speak((NUM[x.reps] || x.reps) + ', 세트 끝'); else if (x.mode === 'hold') sfx('end'); }
+    st.i++; st.t0 = now(); st.cue = ''; st.pausedAt = null; st.sec = null;
     if (st.i >= st.steps.length) return finish();
     save(); tick();
   }
@@ -1123,7 +1161,7 @@
     while (i < st.steps.length && (st.steps[i].key || st.steps[i].name) === key) i++;
     if (cur().key && !st.done[cur().key]) st.skip[cur().key] = st.skip[cur().key] || 1;
     for (var j = st.i; j < i; j++) st.stat[j] = 'skip';
-    hush(); st.i = i; st.t0 = now(); st.cue = ''; st.pausedAt = null;
+    hush(); st.i = i; st.t0 = now(); st.cue = ''; st.pausedAt = null; st.sec = null;
     if (st.i >= st.steps.length) return finish();
     save(); tick();
   }
