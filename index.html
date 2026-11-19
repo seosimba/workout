@@ -1051,8 +1051,8 @@
           var w = nextWork(st.i);
           speak(x.lead ? '1분 뒤에 시작해요. 첫 순서 ' + x.name : x.type === 'move' ? '다음은 ' + x.name + ', ' + desc(x) : x.short ? '반대쪽' : '쉬기 ' + x.sec + '초' + (w ? ', 다음 ' + w.set + '세트' : ''));
         });
-        else if (r === 30 && x.sec >= 60) cue('30', function () { speak('시작 30초 전'); });
-        else if ((r === 15 || r === 10 || r === 5) && x.sec > r) cue('r' + r, function () { speak('시작 ' + r + '초 전'); });
+        else if (r === 30 && x.sec >= 60) cue('30', function () { speak('30초 전'); });
+        else if ((r === 15 || r === 10 || r === 5) && x.sec > r) cue('r' + r, function () { speak(r + '초 전'); });
         else if (r <= 3 && r >= 1) cue('c' + r, function () { SND.beep(1, 660, 0.12); speak(['', '하나', '둘', '셋'][r], true); });
       } else if (x.mode === 'reps') {
         var c = cyc(x) * 1000, n = Math.floor(e / c), off = e - n * c, j = 0, acc = 0;
