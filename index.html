@@ -1110,8 +1110,8 @@
     SFX = {};
     var set = SETS[style].lo ? SETS[style] : SETS.mallet;
     /* 이어폰 기준(11/19 본인: 더 낮고 작게 ×2 — 지금 120Hz·크기 0.1) — lo = 매초 툭 · hi = 방향 바뀔 때 조금 높은 툭 · cd = 버티기 끝 3초 · end = 버티기 끝 부드러운 띵 */
-    /* lo2 = 한 초 건너 약하게(본인 11/20) — lo 를 55% 크기로 */
-    var soft = [set.lo[0].map(function (q) { return [q[0], q[1] * 0.55].concat(q.slice(2)); }), set.lo[1]];
+    /* lo2 = 한 초 건너 약하게(본인 11/20) — 55%는 차이가 안 느껴져서 35%(약 -9dB)로 */
+    var soft = [set.lo[0].map(function (q) { return [q[0], q[1] * 0.35].concat(q.slice(2)); }), set.lo[1]];
     [['lo'].concat(set.lo), ['lo2'].concat(soft), ['hi'].concat(set.hi), ['cd'].concat(set.cd), ['end', END, 600]].forEach(function (a) {
       try {
         var el = new Audio(wav(a[1], a[2])); el.preload = 'auto'; SFX[a[0]] = el;
