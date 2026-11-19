@@ -211,6 +211,44 @@
   .tmr-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   body.tmr-on article { padding-bottom: 320px; }
   @media (prefers-reduced-motion: reduce) { .tmr[data-state="done"] .tmr-panel { animation: none; } }
+
+  /* 운동 안내 — 전체 화면 */
+  .w-go { display: block; width: 100%; margin: 8px 0 2px; font: inherit; font-size: 0.86rem; font-weight: 700; min-height: 40px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+  .gd { position: fixed; inset: 0; z-index: 40; background: var(--bg); color: var(--text); display: flex; flex-direction: column; padding: calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom)); overflow-y: auto; }
+  .gd[hidden] { display: none; }
+  .gd[data-mode="rest"], .gd[data-mode="move"] { background: var(--accent-tint); }
+  .gd-top { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-sub); }
+  .gd-prog { flex: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .gd-tb { font: inherit; font-size: 0.85rem; font-weight: 700; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+  .gd-bar { height: 4px; border-radius: 2px; background: var(--border); margin: 8px 0 0; overflow: hidden; }
+  .gd-bar i { display: block; height: 100%; background: var(--accent-bright); width: 0; }
+  .gd-main { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; padding: 12px 0; min-height: 300px; }
+  .gd-kind { font-size: 1rem; font-weight: 700; color: var(--accent); }
+  .gd-name { font-size: 1.7rem; font-weight: 800; line-height: 1.3; margin: 4px 0 6px; }
+  .gd-name a { color: var(--text); text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 4px; }
+  .gd-big { font-size: 88px; line-height: 1.05; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .gd-big small { font-size: 0.4em; color: var(--text-sub); font-weight: 700; }
+  .gd-big.txt { font-size: 2rem; line-height: 1.4; }
+  .gd-cue { font-size: 1.6rem; font-weight: 800; color: var(--accent); min-height: 2.4rem; }
+  .gd-note { font-size: 0.88rem; color: var(--text-sub); line-height: 1.5; margin-top: 4px; }
+  .gd-next { font-size: 0.9rem; color: var(--text-sub); margin-top: 14px; }
+  .gd-msg { font-size: 0.85rem; font-weight: 700; color: var(--warn-text); background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; text-align: center; }
+  .gd-msg:empty { display: none; }
+  .gd-tap { display: block; width: 100%; font: inherit; font-size: 1.3rem; font-weight: 800; min-height: 84px; border-radius: 16px; border: 0; background: var(--accent); color: var(--surface); margin-bottom: 10px; cursor: pointer; }
+  .gd-tap[hidden] { display: none; }
+  .gd-ctl { display: flex; gap: 10px; }
+  .gd-b { flex: 1; font: inherit; font-size: 1.05rem; font-weight: 700; min-height: 60px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+  .gd-link { font: inherit; font-size: 0.85rem; border: 0; background: none; color: var(--text-sub); text-decoration: underline; min-height: 40px; margin-top: 4px; cursor: pointer; }
+  .gd[data-paused="1"] .gd-big, .gd[data-paused="1"] .gd-cue { opacity: 0.45; }
+  .gd-sum { text-align: left; }
+  .gd-sum h3 { font-size: 1.5rem; margin: 18px 0 10px; }
+  .gd-sum ul { list-style: none; padding: 0; margin: 0 0 12px; }
+  .gd-sum li { padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 8px; }
+  .gd-sum li span { color: var(--text-sub); white-space: nowrap; }
+  .gd-sum textarea { width: 100%; min-height: 96px; font: inherit; font-size: 0.85rem; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); resize: vertical; }
+  .gd-sum p { font-size: 0.82rem; color: var(--text-sub); margin: 6px 0 10px; }
+  body.gd-on { overflow: hidden; }
+  body.gd-on .tmr { display: none; }
 </style>
 </head>
 <body>
@@ -610,6 +648,8 @@
       if (p.test && x.k === 'strB') h += testLine(p);
       h += '<div class="w-it"><a class="w-k" href="' + k.h + '">' + k.i + ' ' + k.n + '</a> <span class="w-at">' + x.at + '</span>' + (p.done.indexOf(x.k) >= 0 ? ' ✓' : '') + '</div>';
       h += EX[x.k] ? exList(x.k, d, p.ex, p.cut) : '<div class="w-sub">' + (x.t || k.t).split(' — ')[0] + '</div>';
+      if (EX[x.k] && p.done.indexOf(x.k) < 0 && (d === today || (d === addDays(today, -1) && !p.done.length)))
+        h += '<button type="button" class="w-go" data-go="' + d + '|' + x.k + '">▶ 안내 시작</button>';
     });
     if (p.test && !p.items.some(function (x) { return x.k === 'strB'; })) h += testLine(p);
     if (!p.items.length) h += '<div class="w-it">😌 쉬기</div><div class="w-sub">식후 15~20분 걷기면 충분해요</div>';
@@ -691,6 +731,8 @@
   });
   window.addEventListener('hashchange', function () { route(true); });
   route(!!location.hash);
+  /* 운동 안내(아래 스크립트)가 그날 계획을 읽어 가요 */
+  window.WK = { plan: plan, EX: EX, KB: KB, K: K, YT: YT, md: md, isTest: isTest, addDays: addDays };
 })();
 </script>
 <div id="tmr" class="tmr" data-state="idle">
@@ -845,7 +887,293 @@
       else localStorage.removeItem(KEY);
     }
   } catch (e) {}
+  window.WK_SND = { audio: audio, beep: beep };
   render();
+})();
+</script>
+<div id="guide" class="gd" hidden role="dialog" aria-modal="true" aria-label="운동 안내">
+  <div class="gd-top"><span class="gd-prog"></span><button type="button" class="gd-tb" data-g="mute">🔊 음성</button><button type="button" class="gd-tb" data-g="end">■ 끝내기</button></div>
+  <div class="gd-bar"><i></i></div>
+  <div class="gd-play">
+    <div class="gd-main">
+      <div class="gd-kind"></div>
+      <div class="gd-name"></div>
+      <div class="gd-big"></div>
+      <div class="gd-cue"></div>
+      <div class="gd-note"></div>
+      <div class="gd-next"></div>
+    </div>
+    <div class="gd-msg" aria-live="polite"></div>
+    <button type="button" class="gd-tap" data-g="tap" hidden>✓ 세트 끝</button>
+    <div class="gd-ctl"><button type="button" class="gd-b" data-g="pause">⏸ 일시정지</button><button type="button" class="gd-b" data-g="skip">⏭ 넘기기</button></div>
+    <button type="button" class="gd-link" data-g="skipex">이 동작 통째로 빼기</button>
+  </div>
+  <div class="gd-sum" hidden>
+    <h3>오늘 운동 끝!</h3>
+    <ul class="gd-list"></ul>
+    <textarea class="gd-txt" readonly aria-label="오늘 한 것 요약"></textarea>
+    <p>복사해서 채팅에 붙여 주면 페이지에 ✓ 해 둘게요.</p>
+    <div class="gd-ctl"><button type="button" class="gd-b" data-g="copy">📋 복사</button><button type="button" class="gd-b" data-g="close">닫기</button></div>
+  </div>
+</div>
+<script>
+/* 운동 안내 — 계획 카드의 「▶ 안내 시작」을 누르면 그날 동작을 순서대로 음성으로 안내해요.
+   개수 동작은 G 의 박자(t)에 맞춰 세고, 버티기·준비운동은 초를 세고, 최대 개수 동작(tap)과 평로라(free)는 눌러서 넘겨요.
+   세트·개수·초는 EX(그날 cut 이 있으면 cut)의 글자 맨 앞 「3×12」「2×20초」「2세트」「10분」에서 읽어요.
+   화면을 벗어나면(유튜브·잠금) 자동으로 멈춰요 — 돌아와서 「계속」. */
+(function () {
+  var WK = window.WK, SND = window.WK_SND || { audio: function () {}, beep: function () {} };
+  var root = document.getElementById('guide');
+  if (!WK || !root) return;
+  /* 동작 이름별 규칙 — t: [[초, 말], …] 한 번의 박자 · rest: 세트 사이 쉬기(초) · tap: 눌러서 끝 · side: 왼쪽·오른쪽 따로 · free: 다른 기기로 하고 눌러서 넘김 */
+  var G = {
+    '풀업': { tap: 1, rest: 90 },
+    '친업': { t: [[2, '올라가요'], [3, '내려와요']], rest: 90 },
+    '맨몸 스쿼트': { t: [[3, '내려가요'], [1, '올라와요']], rest: 90 },
+    '발 올린 팔굽혀펴기': { tap: 1, rest: 60 },
+    '매달려 무릎 들기': { t: [[1, '올려요'], [2, '내려요']], rest: 60 },
+    '데드버그': { t: [[2, '뻗어요'], [1, '돌아와요']], rest: 60 },
+    '벽 짚고 한 다리 데드리프트': { t: [[3, '내려가요'], [1, '올라와요']], rest: 60, side: 1 },
+    '소파 힙 쓰러스트': { t: [[1, '올려요'], [2, '버텨요'], [1, '내려요']], rest: 60 },
+    '케틀벨 힙 쓰러스트': { t: [[1, '올려요'], [2, '버텨요'], [1, '내려요']], rest: 60 },
+    '케틀벨 루마니안 데드리프트': { t: [[3, '내려가요'], [1, '올라와요']], rest: 60 },
+    '할로우 홀드': { rest: 60 },
+    '러시안 트위스트': { t: [[1, '왼쪽'], [1, '오른쪽']], rest: 60 },
+    '맨몸 러시안 트위스트': { t: [[1, '왼쪽'], [1, '오른쪽']], rest: 60 },
+    '로잉': { rest: 0 },
+    '인클라인 덤벨 프레스': { t: [[3, '내려요'], [1, '밀어요']], rest: 90 },
+    '인클라인 덤벨 로우': { t: [[1, '당겨요'], [2, '내려요']], rest: 60 },
+    '엎드려 리어 레이즈': { t: [[1, '들어요'], [2, '내려요']], rest: 60 },
+    '평로라': { free: 1 },
+    '리버스 크런치': { t: [[1, '말아 올려요'], [2, '내려요']], rest: 60 },
+    '한 손 덤벨 들고 걷기': { rest: 60, side: 1 }
+  };
+  var NUM = ['', '하나', '둘', '셋', '넷', '다섯', '여섯', '일곱', '여덟', '아홉', '열', '열하나', '열둘', '열셋', '열넷', '열다섯', '열여섯', '열일곱', '열여덟', '열아홉', '스물'];
+  var KEY = 'workout:guide:v1';
+
+  function spec(s) {
+    var o = { sets: 1 }, m = /^(\d+)(?:×(\d+)(초)?|세트)/.exec(s || '');
+    if (m) { o.sets = +m[1]; if (m[2]) { if (m[3]) o.hold = +m[2]; else o.reps = +m[2]; } }
+    else if ((m = /^(\d+)분/.exec(s || ''))) o.hold = +m[1] * 60;
+    return o;
+  }
+  function desc(x) {
+    if (x.mode === 'free') return '끝나면 눌러요';
+    if (x.mode === 'tap') return x.sets + '세트 · 끝나면 눌러요';
+    if (x.mode === 'hold') return (x.hold >= 60 ? x.hold / 60 + '분' : x.hold + '초' + (x.side ? '씩' : '')) + (x.sets > 1 ? ' ' + x.sets + '세트' : '');
+    return x.reps + '개' + (x.side ? '씩' : '') + ' ' + x.sets + '세트';
+  }
+  function cyc(x) { var s = 0; x.t.forEach(function (p) { s += p[0]; }); return s; }
+  function build(d, k) {
+    var p = WK.plan(d), pre = WK.isTest(WK.addDays(d, 1)), cut = p.cut, out = [];
+    if (k !== 'mini' && k !== 'bike') out.push({ type: 'work', mode: 'hold', name: '준비운동', key: '', hold: cut ? 180 : 300, sets: 1, set: 1,
+      note: '고양이-소 → 90/90 엉덩이 돌리기 → 옆으로 누워 다리 들기 → 맨몸 스쿼트 10회 → 매달리기 20초' });
+    if (p.test && k === 'strB') out.push({ type: 'work', mode: 'free', name: '📏 기록 재기', key: '', sets: 1, set: 1, note: '엉덩이 들기 왼·오 · 30초 의자 일어나기 · 풀업 최대' });
+    WK.EX[k].map(function (e) { return !WK.KB && e[4] ? e[4] : e; }).filter(function (e) {
+      return cut ? !!cut[e[0]] : !(pre && e[3] === 'pre');
+    }).forEach(function (e) {
+      var g = G[e[0]] || { tap: 1, rest: 60 }, sp = spec(cut ? cut[e[0]] : e[1]);
+      var mode = g.free ? 'free' : g.tap ? 'tap' : sp.hold ? 'hold' : sp.reps && g.t ? 'reps' : 'tap';
+      var base = { name: e[0], key: e[0], sets: sp.sets, mode: mode, reps: sp.reps, hold: sp.hold, t: g.t, side: !!g.side, yt: e[2] || '', note: cut ? cut[e[0]] : e[1] };
+      out.push(Object.assign({}, base, { type: 'move', sec: out.length ? 20 : 10 }));
+      for (var s = 1; s <= sp.sets; s++) {
+        (g.side ? ['왼쪽', '오른쪽'] : ['']).forEach(function (sd, j) {
+          if (j) out.push(Object.assign({}, base, { type: 'rest', sec: 5, set: s, short: 1, sd: sd }));
+          out.push(Object.assign({}, base, { type: 'work', set: s, sd: sd, last: !g.side || j === 1 }));
+        });
+        if (s < sp.sets && g.rest) out.push(Object.assign({}, base, { type: 'rest', sec: g.rest, set: s + 1 }));
+      }
+    });
+    return out;
+  }
+
+  var $ = function (s) { return root.querySelector(s); };
+  var E = { prog: $('.gd-prog'), bar: $('.gd-bar i'), kind: $('.gd-kind'), name: $('.gd-name'), big: $('.gd-big'), cue: $('.gd-cue'), note: $('.gd-note'),
+    next: $('.gd-next'), msg: $('.gd-msg'), tap: $('.gd-tap'), pause: $('[data-g="pause"]'), mute: $('[data-g="mute"]'), play: $('.gd-play'), sum: $('.gd-sum'),
+    list: $('.gd-list'), txt: $('.gd-txt') };
+  var st = null, iv = null, lock = null, voice = null, mute = false;
+  function now() { return Date.now(); }
+
+  function pickVoice() { try { voice = speechSynthesis.getVoices().filter(function (v) { return /^ko/i.test(v.lang); })[0] || null; } catch (e) {} }
+  if ('speechSynthesis' in window) { pickVoice(); try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {} }
+  function speak(t, flush) {
+    if (mute || !('speechSynthesis' in window)) return;
+    try {
+      if (flush) speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(t);
+      u.lang = 'ko-KR'; u.rate = 1.05; if (voice) u.voice = voice;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function hush() { try { speechSynthesis.cancel(); } catch (e) {} }
+  function wake(on) {
+    if (!('wakeLock' in navigator)) return;
+    if (!on) { if (lock) lock.release().catch(function () {}); lock = null; return; }
+    if (lock || document.visibilityState !== 'visible') return;
+    navigator.wakeLock.request('screen').then(function (l) { lock = l; l.addEventListener('release', function () { if (lock === l) lock = null; }); }).catch(function () {});
+  }
+  function save() { try { if (st) localStorage.setItem(KEY, JSON.stringify({ d: st.d, k: st.k, i: st.i, done: st.done, skip: st.skip })); else localStorage.removeItem(KEY); } catch (e) {} }
+
+  function cur() { return st.steps[st.i]; }
+  function dur(x) {
+    if (x.type !== 'work') return x.sec * 1000;
+    if (x.mode === 'hold') return x.hold * 1000;
+    if (x.mode === 'reps') return x.reps * cyc(x) * 1000;
+    return Infinity;
+  }
+  function el() { return st.pausedAt != null ? st.pausedAt : now() - st.t0; }
+  function nextWork(i) { for (var j = i + 1; j < st.steps.length; j++) if (st.steps[j].type === 'work') return st.steps[j]; return null; }
+
+  function begin(d, k, at, done, skip, resume) {
+    SND.audio();
+    st = { d: d, k: k, steps: build(d, k), i: at || 0, t0: now(), pausedAt: null, cue: '', done: done || {}, skip: skip || {} };
+    if (!st.steps.length) { st = null; return; }
+    root.hidden = false; document.body.classList.add('gd-on');
+    E.play.hidden = false; E.sum.hidden = true; E.msg.textContent = '';
+    wake(true);
+    if (resume) { st.pausedAt = 0; E.msg.textContent = '이어서 할 수 있어요 — 「계속」을 누르세요'; }
+    else speak(WK.K[k].n + ' 시작할게요', true);
+    save(); clearInterval(iv); iv = setInterval(tick, 100); tick();
+  }
+  function cue(key, fn) { if (st.cue !== key) { st.cue = key; fn(); } }
+  function tick() {
+    if (!st) return;
+    var x = cur(), e = el(), D = dur(x), left = D - e, r = Math.ceil(left / 1000);
+    if (st.pausedAt == null) {
+      if (left <= 0) return advance(true);
+      if (x.type === 'rest' || x.type === 'move') {
+        if (e < 400) cue('s', function () {
+          var w = nextWork(st.i);
+          speak(x.type === 'move' ? '다음은 ' + x.name + ', ' + desc(x) : x.short ? '반대쪽' : '쉬기 ' + x.sec + '초' + (w ? ', 다음 ' + w.set + '세트' : ''));
+        });
+        else if (r === 30 && x.sec >= 60) cue('30', function () { speak('30초 남았어요'); });
+        else if (r === 10 && x.sec >= 20) cue('10', function () { speak('10초'); });
+        else if (r <= 3) cue('c' + r, function () { SND.beep(1, 660, 0.12); });
+      } else if (x.mode === 'reps') {
+        var c = cyc(x) * 1000, n = Math.floor(e / c), off = e - n * c, j = 0, acc = 0;
+        while (j < x.t.length - 1 && off >= (acc + x.t[j][0]) * 1000) { acc += x.t[j][0]; j++; }
+        cue(n + '.' + j, function () {
+          var w = x.t[j][1];
+          if (n === 0 && j === 0) speak((x.sd ? x.sd + ', ' : '') + '시작, ' + w);
+          else if (j === 0) speak((NUM[n] || n) + (n === x.reps - 1 ? ', 마지막' : ''));
+          else if (n === 0) speak(w);
+          else SND.beep(1, 520, 0.08);
+        });
+      } else if (x.mode === 'hold') {
+        if (e < 400) cue('s', function () { speak((x.sd ? x.sd + ', ' : '') + (x.name === '준비운동' ? '준비운동 ' + desc(x) : '시작')); });
+        else if (x.hold >= 120 && r === 60) cue('60', function () { speak('1분 남았어요'); });
+        else if (r === 10 && x.hold >= 20) cue('10', function () { speak('10초'); });
+        else if (r <= 3) cue('c' + r, function () { SND.beep(1, 660, 0.12); });
+      } else if (e < 400) cue('s', function () {
+        speak(x.mode === 'free' ? x.name + ', 끝나면 눌러요' : x.name + ' ' + x.set + '세트' + (x.sd ? ', ' + x.sd : '') + (x.set === 1 ? ', 끝나면 화면을 눌러요' : ''));
+      });
+    }
+    draw(x, e, D);
+  }
+  function advance(auto, skipped) {
+    var x = cur();
+    if (x.type === 'work' && x.key && x.last) {
+      var bag = skipped ? st.skip : st.done; bag[x.key] = (bag[x.key] || 0) + 1;
+    }
+    if (auto && x.type === 'work') { if (x.mode === 'reps') speak((NUM[x.reps] || x.reps) + ', 세트 끝'); else if (x.mode === 'hold') SND.beep(2, 990, 0.25); }
+    st.i++; st.t0 = now(); st.cue = ''; st.pausedAt = null;
+    if (st.i >= st.steps.length) return finish();
+    save(); tick();
+  }
+  function skipEx() {
+    var key = cur().key || cur().name, i = st.i;
+    while (i < st.steps.length && (st.steps[i].key || st.steps[i].name) === key) i++;
+    if (cur().key && !st.done[cur().key]) st.skip[cur().key] = st.skip[cur().key] || 1;
+    hush(); st.i = i; st.t0 = now(); st.cue = ''; st.pausedAt = null;
+    if (st.i >= st.steps.length) return finish();
+    save(); tick();
+  }
+  function pause(auto) {
+    if (!st) return;
+    if (st.pausedAt == null) { st.pausedAt = el(); hush(); if (auto) E.msg.textContent = '화면을 벗어나서 멈췄어요 — 「계속」을 누르세요'; }
+    else { SND.audio(); st.t0 = now() - st.pausedAt; st.pausedAt = null; st.cue = st.cue || ''; E.msg.textContent = ''; wake(true); speak('계속할게요'); }
+    save(); tick();
+  }
+  function finish() {
+    clearInterval(iv); iv = null; hush(); speak('오늘 운동 끝! 수고했어요');
+    var lines = [], did = [], miss = [];
+    WK.EX[st.k].map(function (e) { return !WK.KB && e[4] ? e[4] : e; }).forEach(function (e) {
+      var n = st.done[e[0]] || 0, total = 0;
+      st.steps.forEach(function (x) { if (x.type === 'work' && x.key === e[0] && x.last) total++; });
+      if (!total && !st.skip[e[0]]) return;
+      lines.push('<li>' + e[0] + ' <span>' + (n ? n + '/' + total + '세트' : '안 함') + '</span></li>');
+      (n ? did : miss).push(n ? e[0] + ' ' + n + '세트' : e[0]);
+    });
+    E.list.innerHTML = lines.join('');
+    E.txt.value = WK.md(st.d) + ' ' + WK.K[st.k].n + ' 안내로 함 — ' + (did.join(', ') || '없음') + (miss.length ? ' / 안 함: ' + miss.join(', ') : '');
+    E.play.hidden = true; E.sum.hidden = false; E.prog.textContent = WK.K[st.k].n + ' 끝'; E.bar.style.width = '100%';
+    root.removeAttribute('data-mode');
+    wake(false); st.finished = true; try { localStorage.removeItem(KEY); } catch (e) {}
+  }
+  function close() { clearInterval(iv); iv = null; hush(); wake(false); st = null; save(); root.hidden = true; document.body.classList.remove('gd-on'); }
+
+  function fmt(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+  function draw(x, e, D) {
+    var works = st.steps.filter(function (y) { return y.type === 'work'; }).length, wi = st.steps.slice(0, st.i + 1).filter(function (y) { return y.type === 'work'; }).length;
+    root.setAttribute('data-mode', x.type);
+    root.setAttribute('data-paused', st.pausedAt != null ? '1' : '0');
+    E.prog.textContent = WK.K[st.k].n + ' · ' + wi + '/' + works;
+    E.bar.style.width = Math.round(st.i / st.steps.length * 100) + '%';
+    var setTxt = x.sets > 1 ? x.set + '세트 / ' + x.sets + (x.sd ? ' · ' + x.sd : '') : (x.sd || '');
+    E.kind.textContent = x.type === 'move' ? '다음 동작' : x.type === 'rest' ? (x.short ? '반대쪽으로' : '쉬기') : setTxt;
+    E.name.innerHTML = x.yt ? '<a href="' + WK.YT + x.yt + '" target="_blank" rel="noopener">' + x.name + '</a>' : x.name;
+    E.big.className = 'gd-big';
+    var cueTxt = '';
+    if (x.type !== 'work' || x.mode === 'hold') E.big.textContent = fmt(D - e);
+    else if (x.mode === 'reps') {
+      var c = cyc(x) * 1000, n = Math.min(x.reps, Math.floor(e / c) + 1), off = e - (n - 1) * c, j = 0, acc = 0;
+      while (j < x.t.length - 1 && off >= (acc + x.t[j][0]) * 1000) { acc += x.t[j][0]; j++; }
+      E.big.innerHTML = n + '<small> / ' + x.reps + '</small>'; cueTxt = x.t[j][1];
+    } else { E.big.className = 'gd-big txt'; E.big.textContent = x.mode === 'free' ? '끝나면 눌러요' : '하고 나서 눌러요'; }
+    if (x.type === 'rest' || x.type === 'move') cueTxt = '';
+    E.cue.textContent = st.pausedAt != null ? '⏸ 멈춤' : cueTxt;
+    E.note.textContent = x.type === 'move' || x.type === 'work' ? (x.note || '') : '';
+    var w = x.type === 'work' ? st.steps[st.i + 1] : nextWork(st.i);
+    E.next.textContent = !w ? '마지막이에요' : '다음: ' + (w.type === 'rest' ? (w.short ? '반대쪽' : '쉬기 ' + w.sec + '초') : w.type === 'move' ? w.name : w.name + ' ' + w.set + '세트');
+    var tapLabel = x.type === 'work' ? (x.mode === 'tap' ? '✓ 세트 끝' : x.mode === 'free' ? '✓ 끝, 다음으로' : '') : '▶ 바로 시작';
+    E.tap.hidden = !tapLabel; E.tap.textContent = tapLabel;
+    E.pause.textContent = st.pausedAt != null ? '▶ 계속' : '⏸ 일시정지';
+  }
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-go]');
+    if (!b) return;
+    var a = b.getAttribute('data-go').split('|');
+    begin(a[0], a[1]);
+  });
+  root.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-g]');
+    if (!b || !st) return;
+    var g = b.getAttribute('data-g');
+    if (g === 'tap') { SND.audio(); hush(); if (st.pausedAt != null) pause(); advance(false); }
+    else if (g === 'skip') { hush(); advance(false, cur().type === 'work'); }
+    else if (g === 'skipex') skipEx();
+    else if (g === 'pause') pause();
+    else if (g === 'mute') { mute = !mute; if (mute) hush(); b.textContent = mute ? '🔇 음성 끔' : '🔊 음성'; }
+    else if (g === 'end') { if (st.finished || window.confirm('운동을 여기서 끝낼까요?')) { if (!st.finished) finish(); } }
+    else if (g === 'copy') {
+      var t = E.txt.value;
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = '✓ 복사함'; }, function () { E.txt.select(); try { document.execCommand('copy'); b.textContent = '✓ 복사함'; } catch (e) {} });
+    }
+    else if (g === 'close') close();
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!st || st.finished) return;
+    if (document.visibilityState === 'hidden') { if (st.pausedAt == null) pause(true); }
+    else wake(true);
+  });
+
+  /* 새로고침해도 그 단계부터 — 멈춘 채로 다시 열려요 */
+  try {
+    var o = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (o && o.d && o.k && WK.EX[o.k] && WK.plan(o.d)) begin(o.d, o.k, o.i || 0, o.done, o.skip, true);
+  } catch (e) {}
+  window.WK_GUIDE = { build: build, spec: spec };
 })();
 </script>
 </body>
