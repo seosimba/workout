@@ -184,6 +184,33 @@
     html { scroll-behavior: auto; }
     .anchor { transition: none; }
   }
+
+  /* 타이머 — 화면 아래 공용. 쉬는 시간·버티기만 (템포·평로라·순서 안내는 나중에) */
+  .tmr { position: fixed; z-index: 20; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: flex-end; }
+  .tmr.open { left: 12px; }
+  .tmr-pill { font: inherit; font-size: 0.95rem; font-weight: 700; line-height: 1; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); box-shadow: 0 4px 14px rgba(0, 0, 0, .18); font-variant-numeric: tabular-nums; cursor: pointer; }
+  .tmr.open .tmr-pill { display: none; }
+  .tmr[data-state="run"] .tmr-pill, .tmr[data-state="paused"] .tmr-pill { color: var(--accent); border-color: var(--accent); }
+  .tmr[data-state="done"] .tmr-pill { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .tmr-panel { width: 100%; max-width: 520px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 8px 14px 12px; box-shadow: 0 8px 28px rgba(0, 0, 0, .22); }
+  .tmr-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.92rem; font-weight: 700; }
+  .tmr-x { font: inherit; font-size: 0.85rem; min-height: 44px; padding: 0 4px 0 12px; border: 0; background: none; color: var(--text-sub); cursor: pointer; }
+  .tmr-big { font-size: 64px; line-height: 1.05; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; margin: 0 0 10px; }
+  .tmr[data-state="idle"] .tmr-big, .tmr[data-state="idle"] .tmr-run, .tmr[data-state="done"] .tmr-run,
+  .tmr[data-state="run"] .tmr-presets, .tmr[data-state="paused"] .tmr-presets { display: none; }
+  .tmr-run, .tmr-row { display: flex; gap: 8px; }
+  .tmr-row { align-items: center; margin-bottom: 8px; }
+  .tmr-row > span { flex: 0 0 3.3em; font-size: 0.85rem; font-weight: 700; color: var(--text-sub); }
+  .tmr-b { flex: 1; font: inherit; font-size: 1rem; font-weight: 700; line-height: 1; min-height: 52px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-variant-numeric: tabular-nums; }
+  .tmr-b:active { background: var(--accent-tint); }
+  .tmr-tip { font-size: 0.74rem; color: var(--text-sub); line-height: 1.5; }
+  .tmr-link { font: inherit; border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; }
+  .tmr[data-state="done"] .tmr-panel { background: var(--accent); border-color: var(--accent); color: var(--surface); animation: tmr-flash .5s ease-in-out 6 alternate; }
+  .tmr[data-state="done"] .tmr-x, .tmr[data-state="done"] .tmr-tip, .tmr[data-state="done"] .tmr-link, .tmr[data-state="done"] .tmr-row > span { color: var(--surface); }
+  @keyframes tmr-flash { from { opacity: 1; } to { opacity: .6; } }
+  .tmr-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  body.tmr-on article { padding-bottom: 320px; }
+  @media (prefers-reduced-motion: reduce) { .tmr[data-state="done"] .tmr-panel { animation: none; } }
 </style>
 </head>
 <body>
@@ -664,6 +691,161 @@
   });
   window.addEventListener('hashchange', function () { route(true); });
   route(!!location.hash);
+})();
+</script>
+<div id="tmr" class="tmr" data-state="idle">
+  <button type="button" class="tmr-pill" aria-expanded="false" aria-controls="tmr-panel">⏱ <span class="tmr-pill-t">타이머</span></button>
+  <div id="tmr-panel" class="tmr-panel" hidden>
+    <div class="tmr-head"><span class="tmr-label">타이머</span><button type="button" class="tmr-x" data-act="fold">접기 ▾</button></div>
+    <div class="tmr-big" aria-hidden="true">0:00</div>
+    <div class="tmr-run">
+      <button type="button" class="tmr-b" data-act="pause">일시정지</button><button type="button" class="tmr-b" data-act="add">+30초</button><button type="button" class="tmr-b" data-act="stop">끝내기</button>
+    </div>
+    <div class="tmr-presets">
+      <div class="tmr-row"><span>쉬기</span><button type="button" class="tmr-b" data-rest="60">60초</button><button type="button" class="tmr-b" data-rest="90">90초</button><button type="button" class="tmr-b" data-rest="120">120초</button></div>
+      <div class="tmr-row"><span>버티기</span><button type="button" class="tmr-b" data-hold="20">20초</button><button type="button" class="tmr-b" data-hold="30">30초</button></div>
+      <p class="tmr-tip">풀업·친업·스쿼트는 90초, 나머지 60초 · 버티기는 3초 준비하고 시작해요 · <button type="button" class="tmr-link" data-act="test">소리 시험</button><span class="tmr-wl"></span></p>
+    </div>
+    <div class="tmr-sr" aria-live="polite"></div>
+  </div>
+</div>
+<script>
+/* 타이머 — 끝나는 시각(endAt)으로 계산해서, 화면이 잠기거나 유튜브를 보고 와도 남은 시간이 맞아요.
+   아이폰 Safari는 진동이 안 돼서 소리(삐)와 화면 색으로 알려요. 소리는 버튼을 누를 때 켜져요. */
+(function () {
+  var root = document.getElementById('tmr');
+  if (!root) return;
+  function q(s) { return root.querySelector(s); }
+  var pill = q('.tmr-pill'), pillT = q('.tmr-pill-t'), panel = q('.tmr-panel'), big = q('.tmr-big'), label = q('.tmr-label'),
+      sr = q('.tmr-sr'), wl = q('.tmr-wl'), pauseB = q('[data-act="pause"]');
+  var KEY = 'workout:timer:v1', READY = 3;
+  var S = null, done = null, open = false, iv = null, ac = null, lock = null, lastBeep = 0;
+
+  function now() { return Date.now(); }
+  function save() { try { if (S) localStorage.setItem(KEY, JSON.stringify(S)); else localStorage.removeItem(KEY); } catch (e) {} }
+  function fmt(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+  function left() { return S.left != null ? S.left : S.endAt - now(); }
+  function say(t) { sr.textContent = t; }
+
+  function audio() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    try {
+      var A = window.AudioContext || window.webkitAudioContext;
+      if (!ac && A) ac = new A();
+      if (ac && ac.state !== 'running') ac.resume();
+    } catch (e) {}
+  }
+  function beep(n, f, len) {
+    if (!ac) return;
+    try {
+      var t = ac.currentTime + 0.03;
+      for (var i = 0; i < n; i++) {
+        var o = ac.createOscillator(), g = ac.createGain(), s = t + i * (len + 0.15);
+        o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+        g.gain.setValueAtTime(0.0001, s);
+        g.gain.exponentialRampToValueAtTime(0.5, s + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, s + len);
+        o.start(s); o.stop(s + len + 0.05);
+      }
+    } catch (e) {}
+  }
+  function wake(on) {
+    if (!('wakeLock' in navigator)) { wl.textContent = on ? ' · 이 브라우저는 화면 켜 두기가 안 돼요' : ''; return; }
+    if (!on) { if (lock) lock.release().catch(function () {}); lock = null; wl.textContent = ''; return; }
+    if (lock || document.visibilityState !== 'visible') return;
+    navigator.wakeLock.request('screen').then(function (l) {
+      lock = l; wl.textContent = ' · 화면 켜 둠';
+      l.addEventListener('release', function () { if (lock === l) lock = null; });
+    }).catch(function () { wl.textContent = ' · 화면 켜 두기 실패'; });
+  }
+
+  function start(kind, sec) {
+    audio();
+    done = null; lastBeep = 0;
+    S = { kind: kind, sec: sec, phase: kind === 'hold' ? 'ready' : 'go', endAt: now() + (kind === 'hold' ? READY : sec) * 1000, left: null };
+    say((kind === 'hold' ? '버티기 ' : '쉬기 ') + sec + '초 시작');
+    save(); wake(true); run();
+  }
+  function run() { clearInterval(iv); iv = setInterval(tick, 200); tick(); }
+  function tick() {
+    if (!S) return render();
+    if (S.left == null) {
+      var l = S.endAt - now();
+      if (S.phase === 'ready' && l <= 0) { S.phase = 'go'; S.endAt += S.sec * 1000; l = S.endAt - now(); lastBeep = 0; beep(1, 1320, 0.3); save(); }
+      if (S.phase === 'go' && l <= 0) return finish();
+      var s = Math.ceil(l / 1000);
+      if (s <= 3 && s !== lastBeep) { lastBeep = s; beep(1, 660, 0.12); }
+    }
+    render();
+  }
+  function finish() {
+    clearInterval(iv); iv = null;
+    done = S.kind; S = null; save();
+    beep(3, 990, 0.35);
+    say(done === 'hold' ? '버티기 끝' : '쉬기 끝 — 다음 세트');
+    wake(false); open = true; render();
+  }
+  function pause() {
+    if (!S) return;
+    if (S.left == null) { S.left = Math.max(0, S.endAt - now()); clearInterval(iv); wake(false); }
+    else { S.endAt = now() + S.left; S.left = null; audio(); wake(true); run(); }
+    save(); render();
+  }
+  function add() {
+    if (!S) return;
+    if (S.phase === 'ready') S.sec += 30;
+    else if (S.left != null) S.left += 30000;
+    else S.endAt += 30000;
+    save(); render();
+  }
+  function stop() { clearInterval(iv); iv = null; S = null; done = null; save(); wake(false); render(); }
+
+  function render() {
+    var st = S ? (S.left != null ? 'paused' : 'run') : done ? 'done' : 'idle';
+    root.setAttribute('data-state', st);
+    root.classList.toggle('open', open);
+    document.body.classList.toggle('tmr-on', open);
+    panel.hidden = !open;
+    pill.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (S) {
+      var t = fmt(left()), ready = S.phase === 'ready';
+      big.textContent = t;
+      label.textContent = (ready ? '준비 — 자세 잡기' : (S.kind === 'hold' ? '버티기 ' : '쉬기 ') + S.sec + '초') + (S.left != null ? ' · 멈춤' : '');
+      pillT.textContent = (ready ? '준비 ' : '') + t;
+      pauseB.textContent = S.left != null ? '계속' : '일시정지';
+    } else if (done) {
+      big.textContent = '끝!';
+      label.textContent = done === 'hold' ? '버티기 끝' : '쉬기 끝 — 다음 세트';
+      pillT.textContent = '끝!';
+    } else { label.textContent = '타이머'; pillT.textContent = '타이머'; }
+  }
+
+  pill.addEventListener('click', function () { audio(); open = true; render(); });
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('button');
+    if (!b || b === pill) return;
+    if (b.hasAttribute('data-rest')) return start('rest', +b.getAttribute('data-rest'));
+    if (b.hasAttribute('data-hold')) return start('hold', +b.getAttribute('data-hold'));
+    var a = b.getAttribute('data-act');
+    if (a === 'fold') { open = false; if (done) done = null; render(); }
+    else if (a === 'pause') pause();
+    else if (a === 'add') add();
+    else if (a === 'stop') stop();
+    else if (a === 'test') { audio(); beep(3, 990, 0.35); say('소리 시험'); }
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && S && S.left == null) { wake(true); tick(); }
+  });
+
+  /* 새로고침해도 이어서 — 끝난 지 10분 넘은 건 버려요 */
+  try {
+    var o = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (o && o.kind && o.sec) {
+      if (o.left != null || o.endAt - now() > -600000) { S = o; open = true; if (S.left == null) run(); }
+      else localStorage.removeItem(KEY);
+    }
+  } catch (e) {}
+  render();
 })();
 </script>
 </body>
