@@ -1110,7 +1110,9 @@
     SFX = {};
     var set = SETS[style].lo ? SETS[style] : SETS.mallet;
     /* 이어폰 기준(11/19 본인: 더 낮고 작게 ×2 — 지금 120Hz·크기 0.1) — lo = 매초 툭 · hi = 방향 바뀔 때 조금 높은 툭 · cd = 버티기 끝 3초 · end = 버티기 끝 부드러운 띵 */
-    [['lo'].concat(set.lo), ['hi'].concat(set.hi), ['cd'].concat(set.cd), ['end', END, 600]].forEach(function (a) {
+    /* lo2 = 한 초 건너 약하게(본인 11/20) — lo 를 55% 크기로 */
+    var soft = [set.lo[0].map(function (q) { return [q[0], q[1] * 0.55].concat(q.slice(2)); }), set.lo[1]];
+    [['lo'].concat(set.lo), ['lo2'].concat(soft), ['hi'].concat(set.hi), ['cd'].concat(set.cd), ['end', END, 600]].forEach(function (a) {
       try {
         var el = new Audio(wav(a[1], a[2])); el.preload = 'auto'; SFX[a[0]] = el;
         el.muted = true;
@@ -1166,7 +1168,7 @@
         var tk = isFinite(D) ? r : Math.floor(e / 1000);
         /* 말하는 초엔 똑을 건너뛰어요(소리 파일이 음성을 끊지 않게) */
         var spk = x.type !== 'work' ? [30, 15, 10, 5, 3, 2, 1] : x.mode === 'hold' ? [60, 10] : [];
-        if (st.sec !== tk && style !== 'tempo' && !(x.mode === 'free' && x.type === 'work')) { var first = st.sec == null; st.sec = tk; if (!first && spk.indexOf(tk) < 0) sfx(isFinite(D) && r <= 3 ? 'cd' : 'lo'); }
+        if (st.sec !== tk && style !== 'tempo' && !(x.mode === 'free' && x.type === 'work')) { var first = st.sec == null; st.sec = tk; if (!first && spk.indexOf(tk) < 0) sfx(isFinite(D) && r <= 3 ? 'cd' : tk % 2 ? 'lo2' : 'lo'); }
       }
       if (x.type === 'rest' || x.type === 'move') {
         if (e < 400) cue('s', function () {
@@ -1182,7 +1184,7 @@
         x.t.forEach(function (p) { turns.push(acc); acc += p[0]; });
         cue(n + '.' + sec, function () {
           if (sec === 0) { speak(n === 0 ? '시작' + (x.sd ? ', ' + x.sd : '') : (NUM[n] || n) + (n === x.reps - 1 ? ', 마지막' : '')); }
-          else sfx(turns.indexOf(sec) > 0 ? 'hi' : 'lo');
+          else sfx(turns.indexOf(sec) > 0 ? 'hi' : sec % 2 ? 'lo' : 'lo2');
         });
       } else if (x.mode === 'hold') {
         if (e < 400) cue('s', function () { speak('시작' + (x.sd ? ', ' + x.sd : '') + (x.name === '준비운동' ? ', 준비운동 ' + desc(x) : '')); });
