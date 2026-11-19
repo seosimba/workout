@@ -273,6 +273,20 @@
   .gd-q li img { position: relative; flex: none; width: 52px; height: 34px; object-fit: cover; border-radius: 6px; margin-left: -6px; background: var(--border); }
   .gd-q li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gd-q li.rest img { opacity: .7; }
+
+  /* 안내 — 지금 동작 영상의 썸네일을 위쪽 큰 화면 뒷배경으로(쉬기는 그 동작, 동작 사이는 다음 동작) */
+  .gd { --gd-bg: var(--bg); }
+  .gd[data-mode="rest"], .gd[data-mode="move"] { --gd-bg: var(--accent-tint); }
+  .gd-main { position: relative; isolation: isolate; overflow: hidden; border-radius: 16px; margin-top: 8px; padding: 10px 8px 8px; }
+  .gd-main.pic::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--pic) center / cover no-repeat; filter: blur(1px); transform: scale(1.04); }
+  /* 늘 까만 판에 흰 글자 — 이미지가 있으면 그 뒤에 깔고 까만 막을 덮어요 */
+  .gd-main { background: #16191a; }
+  .gd-main::after { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(0, 0, 0, 0.58); }
+  .gd-main, .gd-main .gd-name a, .gd-main .gd-big { color: #fff; }
+  .gd-main .gd-name a { text-decoration-color: rgba(255, 255, 255, 0.45); }
+  .gd-main .gd-kind, .gd-main .gd-cue { color: #8ef0b8; }
+  .gd-main .gd-note, .gd-main .gd-big small { color: rgba(255, 255, 255, 0.82); }
+  .gd-main * { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
 </style>
 </head>
 <body>
@@ -1028,7 +1042,7 @@
   var $ = function (s) { return root.querySelector(s); };
   var E = { prog: $('.gd-prog'), bar: $('.gd-bar i'), kind: $('.gd-kind'), name: $('.gd-name'), big: $('.gd-big'), cue: $('.gd-cue'), note: $('.gd-note'),
     next: $('.gd-next'), msg: $('.gd-msg'), tap: $('.gd-tap'), pause: $('[data-g="pause"]'), mute: $('[data-g="mute"]'), play: $('.gd-play'), sum: $('.gd-sum'),
-    list: $('.gd-list'), txt: $('.gd-txt'), q: $('.gd-q') };
+    list: $('.gd-list'), txt: $('.gd-txt'), q: $('.gd-q'), main: $('.gd-main') };
   var st = null, iv = null, lock = null, voice = null, mute = false;
   function now() { return Date.now(); }
 
@@ -1225,6 +1239,9 @@
         li[i].className = c.trim();
         if (i !== st.i) { li[i].firstChild.style.width = '0'; li[i].lastChild.textContent = dtext(st.steps[i]); }
       }
+      var pid = x.yt ? x.yt.slice(-11) : '';
+      E.main.classList.toggle('pic', !!pid);
+      if (pid) E.main.style.setProperty('--pic', 'url("https://i.ytimg.com/vi/' + pid + '/mqdefault.jpg")');
       var cur = li[st.i], prev = li[st.i - 1];
       if (cur) E.q.scrollTop = Math.max(0, cur.offsetTop - (prev ? prev.offsetHeight + 6 : 0));
       st.qi = st.i;
