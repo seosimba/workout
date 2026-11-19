@@ -34,10 +34,10 @@
 })();
 </script>
 <title>겨울 운동 노트</title>
-<meta name="description" content="무릎을 지키며 하는 겨울 운동 — 오늘부터 8일 계획과 그날 할 동작">
+<meta name="description" content="무릎을 지키며 하는 겨울 운동 — 어제부터 6일 계획과 그날 할 동작">
 <meta property="og:type" content="article">
 <meta property="og:title" content="겨울 운동 노트">
-<meta property="og:description" content="무릎을 지키며 하는 겨울 운동 — 오늘부터 8일 계획과 그날 할 동작">
+<meta property="og:description" content="무릎을 지키며 하는 겨울 운동 — 어제부터 6일 계획과 그날 할 동작">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
@@ -112,7 +112,7 @@
   summary { cursor: pointer; font-size: 0.92rem; font-weight: 600; color: var(--accent); }
   details[open] summary { margin-bottom: 8px; }
 
-  /* 탭 — 오늘부터 8일 계획이 항상 첫 화면, 탭 줄은 위에 붙어 있어요. JS가 꺼져 있으면 탭 없이 전부 보여요 */
+  /* 탭 — 어제부터 6일 계획이 항상 첫 화면, 탭 줄은 위에 붙어 있어요. JS가 꺼져 있으면 탭 없이 전부 보여요 */
   .tabs { display: none; }
   .tabs-on .tabs { display: flex; position: sticky; top: 0; z-index: 5; gap: 2px; margin: 0 -16px 4px; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
   .tabs a { flex: 1 1 0; min-width: 0; text-align: center; padding: 12px 2px 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-sub); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
@@ -124,7 +124,7 @@
   .tabs-on .cal-wrap > h2:first-child { display: none; }
   .tabs-on [data-panel] > h2:first-child { margin-top: 20px; }
 
-  /* 오늘부터 8일 계획 — 두 칸 */
+  /* 어제부터 6일 계획 — 요일 버튼 6칸 + 고른 날 상세(식단 페이지와 같은 방식, 11/20) */
   .w-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 8px; }
   .w-title { font-weight: 800; font-size: 1.1rem; text-align: center; }
   .w-title small { font-weight: 600; font-size: 0.85rem; color: var(--text-sub); margin-left: 4px; font-variant-numeric: tabular-nums; }
@@ -288,6 +288,21 @@
   .gd-main .gd-kind, .gd-main .gd-cue { color: #8ef0b8; }
   .gd-main .gd-note, .gd-main .gd-big small { color: rgba(255, 255, 255, 0.82); }
   .gd-main * { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+
+  /* 어제부터 6일 — 요일 버튼(식단 페이지 .cal-day 와 같은 모양) */
+  .w-days { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin: 0 0 10px; }
+  .w-dbtn { font: inherit; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; line-height: 1.15; }
+  .w-dbtn .dow { font-size: 0.72rem; color: var(--text-sub); }
+  .w-dbtn .dnum { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .w-dbtn .dmeta { font-size: 0.72rem; min-height: 1.2em; max-width: 100%; overflow: hidden; white-space: nowrap; }
+  .w-dbtn.today { border-color: var(--accent-bright); box-shadow: inset 0 0 0 1px var(--accent-bright); }
+  .w-dbtn.today .dow { color: var(--accent); font-weight: 700; }
+  .w-dbtn.sel { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .w-dbtn.sel .dow { color: var(--surface); opacity: 0.85; }
+  .w-dbtn.did .dnum::after { content: '✓'; font-size: 0.7em; margin-left: 1px; color: var(--accent); }
+  .w-dbtn.sel.did .dnum::after { color: var(--surface); }
+  .w-dbtn.out { opacity: 0.5; }
+  .w-grid { grid-template-columns: minmax(0, 1fr); }
 </style>
 </head>
 <body>
@@ -302,13 +317,13 @@
 </header>
 
 <nav class="tabs" role="tablist" aria-label="운동 페이지">
-  <a role="tab" href="#plan" data-tab="plan" aria-controls="plan-panel">오늘부터</a>
+  <a role="tab" href="#plan" data-tab="plan" aria-controls="plan-panel">6일 계획</a>
   <a role="tab" href="#routine" data-tab="routine" aria-controls="routine-panel">루틴</a>
   <a role="tab" href="#principles" data-tab="principles" aria-controls="principles-panel">원칙·근거</a>
 </nav>
 
-<section class="cal-wrap" id="plan-panel" data-panel="plan" role="tabpanel" aria-label="오늘부터 8일 계획">
-<h2 id="plan">오늘부터 8일 계획</h2>
+<section class="cal-wrap" id="plan-panel" data-panel="plan" role="tabpanel" aria-label="어제부터 6일 계획">
+<h2 id="plan">어제부터 6일 계획</h2>
 <div id="cal"><p class="caption">자바스크립트가 켜져 있어야 캘린더가 보여요.</p></div>
 
 <h3 id="records">기록</h3>
@@ -544,7 +559,7 @@
 </ul>
 </section>
 
-<footer>오늘부터 8일씩 보여 줘요(‹ › 로 앞뒤 8일). 가는 시간까지 정해 두면 갈 확률이 올라가요. 수업 시간, 라이딩, 무릎 진료 결과에 따라 바뀌어요.</footer>
+<footer>어제부터 6일씩 보여 줘요(‹ › 로 앞뒤 6일, 요일을 누르면 그날 할 것). 가는 시간까지 정해 두면 갈 확률이 올라가요. 수업 시간, 라이딩, 무릎 진료 결과에 따라 바뀌어요.</footer>
 </article>
 
 <script>
@@ -590,7 +605,7 @@
     '9:00 요가 — 10:10에 끝나요 · 스크린골프는 요가 등록하고 나서 넣어요',
     '처음 2주는 집 앞 동네 산 한 바퀴(6~7km, 오르막 300m 안팎) · 라이딩은 최고기온 15℃ 넘는 날만'
   ];
-  /* 오늘부터 8일(오늘 + 다음 7일)을 두 칸으로 보여 줘요(‹ › 로 8일씩). 날짜별 예외는 DAYS 에 덮어써요.
+  /* 어제부터 6일(어제 · 오늘 · 다음 4일)을 요일 버튼으로 보여 주고, 고른 날(처음엔 오늘) 상세를 아래에 보여 줘요(‹ › 로 6일씩). 날짜별 예외는 DAYS 에 덮어써요.
      한 운동은 DAYS[날짜].done = ['strA'], 기록 숫자는 DAYS[날짜].m = {l, r, c, p}. 기록하는 날은 TEST0부터 2주마다. */
   var START = '2026-11-16', TEST0 = '2026-11-26';
   var DAYS = {
@@ -636,11 +651,11 @@
       ['리버스 크런치', '2×12~15', 'watch?v=vCPewsVmhz8'], ['한 손 덤벨 들고 걷기', '2×30초씩 · 10~12kg', 'watch?v=y-hn_Ha1-RE']]
   };
   var thisMon = addDays(today, -((parse(today).getDay() + 6) % 7));
-  var SPAN = 8, wk = 0;
+  var SPAN = 6, wk = 0, sel = today;
   var box = document.getElementById('cal');
 
-  function weekDays() { var s = addDays(today, wk * SPAN), a = []; for (var i = 0; i < SPAN; i++) a.push(addDays(s, i)); return a; }
-  function wkName() { return wk === 0 ? '오늘부터 8일' : wk === 1 ? '그다음 8일' : wk === -1 ? '앞의 8일' : wk > 0 ? (wk * SPAN) + '일 뒤부터' : (-wk * SPAN) + '일 전부터'; }
+  function weekDays() { var s = addDays(today, wk * SPAN - 1), a = []; for (var i = 0; i < SPAN; i++) a.push(addDays(s, i)); return a; }
+  function wkName() { return wk === 0 ? '어제부터 6일' : wk === 1 ? '그다음 6일' : wk === -1 ? '앞의 6일' : wk > 0 ? (wk * SPAN) + '일 뒤부터' : (-wk * SPAN) + '일 전부터'; }
   /* 한 날짜 데이터가 잘못돼도 계획 화면 전체가 비지 않게 */
   function render() {
     try { draw(); } catch (e) {
@@ -649,11 +664,13 @@
   }
   function draw() {
     var days = weekDays();
-    var h = '<div class="w-head"><button type="button" class="w-nav" data-wk="-1" aria-label="앞의 8일"' + (days[0] <= START ? ' disabled' : '') + '>‹</button>' +
+    if (days.indexOf(sel) < 0) sel = days.indexOf(today) >= 0 ? today : days[0];
+    var h = '<div class="w-head"><button type="button" class="w-nav" data-wk="-1" aria-label="앞의 6일"' + (days[0] <= START ? ' disabled' : '') + '>‹</button>' +
       '<div class="w-title">' + wkName() + '<small>' + md(days[0]) + ' – ' + md(days[SPAN - 1]) + '</small></div>' +
-      '<button type="button" class="w-nav" data-wk="1" aria-label="다음 8일">›</button></div>';
+      '<button type="button" class="w-nav" data-wk="1" aria-label="다음 6일">›</button></div>';
     if (TODO) h += '<p class="m-note">' + TODO + '</p>';
-    h += '<div class="w-grid">' + days.map(dayCard).join('') + summary(days) + '</div>';
+    h += '<div class="w-days">' + days.map(dayBtn).join('') + '</div>';
+    h += '<div class="w-grid">' + dayCard(sel) + summary(days) + '</div>';
     h += '<p class="legend">3×10 = 10개씩 3세트 · 최대 = 바른 자세로 끝까지 할 수 있는 개수 · 동작 이름을 누르면 영상이 열려요 · 운동 이름을 누르면 루틴 카드로 가요 · 📏 기록 · ✓ 한 것</p>';
     box.innerHTML = h;
   }
@@ -685,6 +702,15 @@
   function testLine(p) {
     return '<div class="w-it test">📏 기록 먼저 <small>' + (p.m ? '엉덩이 들기 왼 ' + p.m.l + ' · 오 ' + p.m.r + ' · 의자 ' + p.m.c + (p.m.p != null ? ' · 풀업 ' + p.m.p : '')
       : '엉덩이 들기 왼·오 · 의자 30초 · 풀업') + '</small> <a href="#records">재는 법</a></div>';
+  }
+  /* 요일 버튼 — 그날 할 운동 아이콘, 다 했으면 ✓ */
+  function dayBtn(d) {
+    var p = plan(d), dow = DOW[parse(d).getDay()];
+    var ic = !p ? '' : p.items.length ? p.items.map(function (x) { return K[x.k].i; }).join('') : '😌';
+    var did = p && p.items.length && p.items.every(function (x) { return p.done.indexOf(x.k) >= 0; });
+    return '<button type="button" class="w-dbtn' + (d === today ? ' today' : '') + (d === sel ? ' sel' : '') + (did ? ' did' : '') + (p ? '' : ' out') +
+      '" data-date="' + d + '" aria-pressed="' + (d === sel) + '" aria-label="' + dow + '요일 ' + md(d) + (did ? ' 다 함' : '') + '">' +
+      '<span class="dow">' + (d === today ? '오늘' : dow) + '</span><span class="dnum">' + +d.slice(8) + '</span><span class="dmeta">' + ic + '</span></button>';
   }
   function dayCard(d) {
     var p = plan(d), dow = parse(d).getDay();
@@ -733,8 +759,9 @@
   }
   box.addEventListener('click', function (e) {
     var b = e.target.closest('button.w-nav');
-    if (!b || b.disabled) return;
-    wk += +b.dataset.wk; render();
+    if (b && !b.disabled) { wk += +b.dataset.wk; return render(); }
+    var t = e.target.closest('button.w-dbtn');
+    if (t) { sel = t.getAttribute('data-date'); render(); }
   });
   render();
   records();
