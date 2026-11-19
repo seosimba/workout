@@ -975,7 +975,7 @@
       var g = G[e[0]] || { tap: 1, rest: 60 }, sp = spec(cut ? cut[e[0]] : e[1]);
       var mode = g.free ? 'free' : g.tap ? 'tap' : sp.hold ? 'hold' : sp.reps && g.t ? 'reps' : 'tap';
       var base = { name: e[0], key: e[0], sets: sp.sets, mode: mode, reps: sp.reps, hold: sp.hold, t: g.t, side: !!g.side, yt: e[2] || '', note: cut ? cut[e[0]] : e[1] };
-      out.push(Object.assign({}, base, { type: 'move', sec: out.length ? 20 : 10 }));
+      out.push(Object.assign({}, base, { type: 'move', sec: 60 }));  /* 동작 사이 60초 (본인 11/19) */
       for (var s = 1; s <= sp.sets; s++) {
         (g.side ? ['왼쪽', '오른쪽'] : ['']).forEach(function (sd, j) {
           if (j) out.push(Object.assign({}, base, { type: 'rest', sec: 5, set: s, short: 1, sd: sd }));
@@ -984,6 +984,11 @@
         if (s < sp.sets && g.rest) out.push(Object.assign({}, base, { type: 'rest', sec: g.rest, set: s + 1 }));
       }
     });
+    /* 시작 전 1분 — 첫 단계 안내를 겸해요 */
+    if (out.length) {
+      if (out[0].type === 'move') { out[0].sec = 60; out[0].lead = 1; }
+      else out.unshift(Object.assign({}, out[0], { type: 'move', sec: 60, lead: 1 }));
+    }
     return out;
   }
 
@@ -1026,12 +1031,12 @@
 
   function begin(d, k, at, done, skip, resume) {
     SND.audio();
-    st = { d: d, k: k, steps: build(d, k), i: at || 0, t0: now(), pausedAt: null, cue: '', done: done || {}, skip: skip || {} };
+    st = { d: d, k: k, steps: build(d, k), i: at || 0, t0: now(), pausedAt: null, cue: '', done: done || {}, skip: skip || {}, go: now(), off: 0, ps: null };
     if (!st.steps.length) { st = null; return; }
     root.hidden = false; document.body.classList.add('gd-on');
     E.play.hidden = false; E.sum.hidden = true; E.msg.textContent = '';
     wake(true);
-    if (resume) { st.pausedAt = 0; E.msg.textContent = '이어서 할 수 있어요 — 「계속」을 누르세요'; }
+    if (resume) { st.pausedAt = 0; st.ps = now(); E.msg.textContent = '이어서 할 수 있어요 — 「계속」을 누르세요'; }
     else speak(WK.K[k].n + ' 시작할게요', true);
     save(); clearInterval(iv); iv = setInterval(tick, 100); tick();
   }
@@ -1044,28 +1049,28 @@
       if (x.type === 'rest' || x.type === 'move') {
         if (e < 400) cue('s', function () {
           var w = nextWork(st.i);
-          speak(x.type === 'move' ? '다음은 ' + x.name + ', ' + desc(x) : x.short ? '반대쪽' : '쉬기 ' + x.sec + '초' + (w ? ', 다음 ' + w.set + '세트' : ''));
+          speak(x.lead ? '1분 뒤에 시작해요. 첫 순서 ' + x.name : x.type === 'move' ? '다음은 ' + x.name + ', ' + desc(x) : x.short ? '반대쪽' : '쉬기 ' + x.sec + '초' + (w ? ', 다음 ' + w.set + '세트' : ''));
         });
-        else if (r === 30 && x.sec >= 60) cue('30', function () { speak('30초 남았어요'); });
-        else if (r === 10 && x.sec >= 20) cue('10', function () { speak('10초'); });
-        else if (r <= 3) cue('c' + r, function () { SND.beep(1, 660, 0.12); });
+        else if (r === 30 && x.sec >= 60) cue('30', function () { speak('시작 30초 전'); });
+        else if ((r === 15 || r === 10 || r === 5) && x.sec > r) cue('r' + r, function () { speak('시작 ' + r + '초 전'); });
+        else if (r <= 3 && r >= 1) cue('c' + r, function () { SND.beep(1, 660, 0.12); speak(['', '하나', '둘', '셋'][r], true); });
       } else if (x.mode === 'reps') {
         var c = cyc(x) * 1000, n = Math.floor(e / c), off = e - n * c, j = 0, acc = 0;
         while (j < x.t.length - 1 && off >= (acc + x.t[j][0]) * 1000) { acc += x.t[j][0]; j++; }
         cue(n + '.' + j, function () {
           var w = x.t[j][1];
-          if (n === 0 && j === 0) speak((x.sd ? x.sd + ', ' : '') + '시작, ' + w);
+          if (n === 0 && j === 0) speak('시작' + (x.sd ? ', ' + x.sd : '') + ', ' + w, true);
           else if (j === 0) speak((NUM[n] || n) + (n === x.reps - 1 ? ', 마지막' : ''));
           else if (n === 0) speak(w);
           else SND.beep(1, 520, 0.08);
         });
       } else if (x.mode === 'hold') {
-        if (e < 400) cue('s', function () { speak((x.sd ? x.sd + ', ' : '') + (x.name === '준비운동' ? '준비운동 ' + desc(x) : '시작')); });
+        if (e < 400) cue('s', function () { speak('시작' + (x.sd ? ', ' + x.sd : '') + (x.name === '준비운동' ? ', 준비운동 ' + desc(x) : ''), true); });
         else if (x.hold >= 120 && r === 60) cue('60', function () { speak('1분 남았어요'); });
         else if (r === 10 && x.hold >= 20) cue('10', function () { speak('10초'); });
         else if (r <= 3) cue('c' + r, function () { SND.beep(1, 660, 0.12); });
       } else if (e < 400) cue('s', function () {
-        speak(x.mode === 'free' ? x.name + ', 끝나면 눌러요' : x.name + ' ' + x.set + '세트' + (x.sd ? ', ' + x.sd : '') + (x.set === 1 ? ', 끝나면 화면을 눌러요' : ''));
+        speak('시작, ' + (x.mode === 'free' ? x.name + ', 끝나면 눌러요' : x.name + ' ' + x.set + '세트' + (x.sd ? ', ' + x.sd : '') + (x.set === 1 ? ', 끝나면 화면을 눌러요' : '')), true);
       });
     }
     draw(x, e, D);
@@ -1090,8 +1095,8 @@
   }
   function pause(auto) {
     if (!st) return;
-    if (st.pausedAt == null) { st.pausedAt = el(); hush(); if (auto) E.msg.textContent = '화면을 벗어나서 멈췄어요 — 「계속」을 누르세요'; }
-    else { SND.audio(); st.t0 = now() - st.pausedAt; st.pausedAt = null; st.cue = st.cue || ''; E.msg.textContent = ''; wake(true); speak('계속할게요'); }
+    if (st.pausedAt == null) { st.pausedAt = el(); st.ps = now(); hush(); if (auto) E.msg.textContent = '화면을 벗어나서 멈췄어요 — 「계속」을 누르세요'; }
+    else { SND.audio(); st.t0 = now() - st.pausedAt; st.pausedAt = null; if (st.ps) st.off += now() - st.ps; st.ps = null; st.cue = st.cue || ''; E.msg.textContent = ''; wake(true); speak('계속할게요'); }
     save(); tick();
   }
   function finish() {
@@ -1117,10 +1122,11 @@
     var works = st.steps.filter(function (y) { return y.type === 'work'; }).length, wi = st.steps.slice(0, st.i + 1).filter(function (y) { return y.type === 'work'; }).length;
     root.setAttribute('data-mode', x.type);
     root.setAttribute('data-paused', st.pausedAt != null ? '1' : '0');
-    E.prog.textContent = WK.K[st.k].n + ' · ' + wi + '/' + works;
+    var tot = now() - st.go - st.off - (st.ps ? now() - st.ps : 0);
+    E.prog.textContent = WK.K[st.k].n + ' · ' + wi + '/' + works + ' · 전체 ' + fmt(tot);
     E.bar.style.width = Math.round(st.i / st.steps.length * 100) + '%';
     var setTxt = x.sets > 1 ? x.set + '세트 / ' + x.sets + (x.sd ? ' · ' + x.sd : '') : (x.sd || '');
-    E.kind.textContent = x.type === 'move' ? '다음 동작' : x.type === 'rest' ? (x.short ? '반대쪽으로' : '쉬기') : setTxt;
+    E.kind.textContent = x.lead ? '시작 준비' : x.type === 'move' ? '다음 동작' : x.type === 'rest' ? (x.short ? '반대쪽으로' : '쉬기') : setTxt;
     E.name.innerHTML = x.yt ? '<a href="' + WK.YT + x.yt + '" target="_blank" rel="noopener">' + x.name + '</a>' : x.name;
     E.big.className = 'gd-big';
     var cueTxt = '';
@@ -1128,8 +1134,8 @@
     else if (x.mode === 'reps') {
       var c = cyc(x) * 1000, n = Math.min(x.reps, Math.floor(e / c) + 1), off = e - (n - 1) * c, j = 0, acc = 0;
       while (j < x.t.length - 1 && off >= (acc + x.t[j][0]) * 1000) { acc += x.t[j][0]; j++; }
-      E.big.innerHTML = n + '<small> / ' + x.reps + '</small>'; cueTxt = x.t[j][1];
-    } else { E.big.className = 'gd-big txt'; E.big.textContent = x.mode === 'free' ? '끝나면 눌러요' : '하고 나서 눌러요'; }
+      E.big.innerHTML = n + '<small> / ' + x.reps + '</small>'; cueTxt = x.t[j][1] + ' · ' + fmt(D - e);
+    } else { E.big.textContent = fmt(e); cueTxt = x.mode === 'free' ? '끝나면 눌러요' : '하고 나서 눌러요'; }
     if (x.type === 'rest' || x.type === 'move') cueTxt = '';
     E.cue.textContent = st.pausedAt != null ? '⏸ 멈춤' : cueTxt;
     E.note.textContent = x.type === 'move' || x.type === 'work' ? (x.note || '') : '';
