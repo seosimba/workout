@@ -1047,7 +1047,13 @@
   var st = null, iv = null, lock = null, voice = null, mute = false;
   function now() { return Date.now(); }
 
-  function pickVoice() { try { voice = speechSynthesis.getVoices().filter(function (v) { return /^ko/i.test(v.lang); })[0] || null; } catch (e) {} }
+  /* 한국어 목소리 중 가장 좋은 것 — 아이폰 설정에서 받은 프리미엄 > 향상됨 > 기본 순서 */
+  function pickVoice() {
+    try {
+      var rank = function (v) { var u = (v.voiceURI + ' ' + v.name).toLowerCase(); return /premium|프리미엄/.test(u) ? 3 : /enhanced|향상|고품질/.test(u) ? 2 : /compact/.test(u) ? 0 : 1; };
+      voice = speechSynthesis.getVoices().filter(function (v) { return /^ko/i.test(v.lang); }).sort(function (a, b) { return rank(b) - rank(a); })[0] || null;
+    } catch (e) {}
+  }
   if ('speechSynthesis' in window) { pickVoice(); try { speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {} }
   /* 아이폰 Safari는 cancel() 바로 뒤의 speak()를 빼먹어요 — 지운 뒤엔 0.15초 있다가 말해요 */
   var cut0 = 0;
